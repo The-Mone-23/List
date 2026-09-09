@@ -1,1017 +1,869 @@
-/* =========================================
-   STORAGE
-========================================= */
-
-const STORAGE_KEY = "friendListBoards_v1";
-
-let boards = [];
-let activeBoardId = null;
-
-
-/* =========================================
-   DOM REFERENCES
-========================================= */
-
-const boardSelect =
-    document.getElementById("boardSelect");
-
-const newBoardButton =
-    document.getElementById("newBoardButton");
-
-const renameBoardButton =
-    document.getElementById("renameBoardButton");
-
-const deleteBoardButton =
-    document.getElementById("deleteBoardButton");
-
-
-const leftPersonName =
-    document.getElementById("leftPersonName");
-
-const rightPersonName =
-    document.getElementById("rightPersonName");
-
-
-const leftFriendInput =
-    document.getElementById("leftFriendInput");
-
-const rightFriendInput =
-    document.getElementById("rightFriendInput");
-
-
-const leftAddButton =
-    document.getElementById("leftAddButton");
-
-const rightAddButton =
-    document.getElementById("rightAddButton");
-
-
-const leftFriendList =
-    document.getElementById("leftFriendList");
-
-const rightFriendList =
-    document.getElementById("rightFriendList");
-
-
-const leftFriendCount =
-    document.getElementById("leftFriendCount");
-
-const rightFriendCount =
-    document.getElementById("rightFriendCount");
-
-
-/* =========================================
-   ID GENERATOR
-========================================= */
-
-function generateId() {
-    return (
-        Date.now().toString(36) +
-        Math.random().toString(36).substring(2, 9)
-    );
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 
-/* =========================================
-   DEFAULT BOARD
-========================================= */
+:root {
 
-function createDefaultBoard() {
+    --background: #050607;
+    --panel: #090b0d;
+    --panel-hover: #0e1114;
 
-    return {
-        id: generateId(),
+    --border: #1c2227;
+    --border-light: #30373d;
 
-        name: "MAIN LIST",
+    --text: #f2f4f5;
+    --muted: #777f85;
+    --dim: #444b50;
 
-        left: {
-            name: "PERSON A",
+    --red: #ff2538;
+    --green: #20e783;
+    --yellow: #ffd43b;
 
-            friends: [
-                {
-                    id: generateId(),
-                    name: "Friend #1",
-                    status: "neutral"
-                },
-
-                {
-                    id: generateId(),
-                    name: "Friend #2",
-                    status: "neutral"
-                },
-
-                {
-                    id: generateId(),
-                    name: "Friend #3",
-                    status: "neutral"
-                }
-            ]
-        },
-
-        right: {
-            name: "PERSON B",
-
-            friends: [
-                {
-                    id: generateId(),
-                    name: "Friend A",
-                    status: "neutral"
-                },
-
-                {
-                    id: generateId(),
-                    name: "Friend C",
-                    status: "neutral"
-                },
-
-                {
-                    id: generateId(),
-                    name: "Friend D",
-                    status: "neutral"
-                }
-            ]
-        }
-    };
+    --red-glow: rgba(255, 37, 56, 0.22);
+    --green-glow: rgba(32, 231, 131, 0.18);
+    --yellow-glow: rgba(255, 212, 59, 0.18);
 }
 
 
-/* =========================================
-   LOAD DATA
-========================================= */
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+}
 
-function loadData() {
 
-    try {
+body {
 
-        const stored =
-            localStorage.getItem(STORAGE_KEY);
+    min-height: 100vh;
 
-        if (stored) {
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(255, 37, 56, 0.035),
+            transparent 35%
+        ),
+        var(--background);
 
-            const parsed =
-                JSON.parse(stored);
+    color: var(--text);
 
-            if (
-                parsed &&
-                Array.isArray(parsed.boards) &&
-                parsed.boards.length > 0
-            ) {
+    font-family:
+        "SFMono-Regular",
+        "SF Mono",
+        "Roboto Mono",
+        "Cascadia Code",
+        monospace;
+}
 
-                boards = parsed.boards;
 
-                activeBoardId =
-                    parsed.activeBoardId;
+/* GRID BACKGROUND */
 
-            }
+body::before {
 
-        }
+    content: "";
 
-    } catch (error) {
+    position: fixed;
 
-        console.error(
-            "Could not load saved lists:",
-            error
+    inset: 0;
+
+    pointer-events: none;
+
+    background-image:
+        linear-gradient(
+            rgba(255,255,255,0.012) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,0.012) 1px,
+            transparent 1px
         );
 
-    }
+    background-size: 50px 50px;
+}
 
 
-    if (boards.length === 0) {
+/* APP */
 
-        const board =
-            createDefaultBoard();
+.app {
 
-        boards = [board];
+    min-height: 100vh;
 
-        activeBoardId =
-            board.id;
-
-        saveData();
-
-    }
-
-
-    if (
-        !boards.some(
-            board =>
-                board.id === activeBoardId
-        )
-    ) {
-
-        activeBoardId =
-            boards[0].id;
-
-    }
+    position: relative;
 
 }
 
 
 /* =========================================
-   SAVE DATA
+   FLOATING LIST MANAGER
 ========================================= */
 
-function saveData() {
+.board-menu-toggle {
 
-    const data = {
-        boards,
-        activeBoardId
-    };
+    position: fixed;
 
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(data)
-    );
+    top: 18px;
+    right: 20px;
+
+    z-index: 100;
+
+    height: 34px;
+
+    padding: 0 14px;
+
+    border: 1px solid var(--border);
+
+    background: rgba(7, 9, 10, 0.95);
+
+    color: var(--muted);
+
+    font-family: inherit;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 2px;
+
+    cursor: pointer;
+
+    transition: 150ms ease;
+}
+
+
+.board-menu-toggle:hover {
+
+    color: white;
+
+    border-color: var(--red);
 
 }
 
 
-/* =========================================
-   ACTIVE BOARD
-========================================= */
+.board-menu {
 
-function getActiveBoard() {
+    position: fixed;
 
-    return boards.find(
-        board =>
-            board.id === activeBoardId
-    );
+    top: 60px;
+    right: 20px;
 
+    width: 250px;
+
+    z-index: 99;
+
+    padding: 10px;
+
+    background: rgba(8, 10, 12, 0.98);
+
+    border: 1px solid var(--border);
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,0.55);
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transform: translateY(-5px);
+
+    transition: 150ms ease;
+}
+
+
+.board-menu.open {
+
+    opacity: 1;
+
+    pointer-events: auto;
+
+    transform: translateY(0);
+}
+
+
+.board-menu select {
+
+    width: 100%;
+
+    height: 38px;
+
+    background: #0c0f11;
+
+    color: white;
+
+    border: 1px solid var(--border);
+
+    outline: none;
+
+    padding: 0 10px;
+
+    font-family: inherit;
+
+    font-size: 10px;
+}
+
+
+.board-actions {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        1fr
+        1fr;
+
+    gap: 5px;
+
+    margin-top: 7px;
+}
+
+
+.board-actions button {
+
+    height: 34px;
+
+    background: transparent;
+
+    border: 1px solid var(--border);
+
+    color: var(--muted);
+
+    font-family: inherit;
+
+    font-size: 8px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 150ms ease;
+}
+
+
+.board-actions button:hover {
+
+    color: white;
+
+    border-color: var(--border-light);
+}
+
+
+.board-actions .danger {
+
+    color: var(--red);
+}
+
+
+.board-actions .danger:hover {
+
+    border-color: var(--red);
+
+    background: rgba(255,37,56,0.06);
 }
 
 
 /* =========================================
-   RENDER EVERYTHING
+   WORKSPACE
 ========================================= */
 
-function render() {
+.workspace {
 
-    renderBoardSelector();
+    min-height: 100vh;
 
-    const board =
-        getActiveBoard();
+    display: grid;
 
-    if (!board) {
-        return;
-    }
-
-
-    leftPersonName.value =
-        board.left.name;
-
-    rightPersonName.value =
-        board.right.name;
-
-
-    renderFriendList(
-        "left",
-        board.left.friends,
-        leftFriendList
-    );
-
-    renderFriendList(
-        "right",
-        board.right.friends,
-        rightFriendList
-    );
-
-
-    leftFriendCount.textContent =
-        board.left.friends.length;
-
-    rightFriendCount.textContent =
-        board.right.friends.length;
-
+    grid-template-rows:
+        minmax(500px, 1fr)
+        auto;
 }
 
 
 /* =========================================
-   BOARD SELECTOR
+   TOP LISTS
 ========================================= */
 
-function renderBoardSelector() {
+.top-lists {
 
-    boardSelect.innerHTML = "";
+    display: grid;
 
-    boards.forEach(board => {
-
-        const option =
-            document.createElement("option");
-
-        option.value =
-            board.id;
-
-        option.textContent =
-            board.name;
-
-        if (
-            board.id ===
-            activeBoardId
-        ) {
-
-            option.selected =
-                true;
-
-        }
-
-        boardSelect.appendChild(
-            option
-        );
-
-    });
+    grid-template-columns:
+        minmax(0, 1fr)
+        1px
+        minmax(0, 1fr);
 
 }
 
 
-/* =========================================
-   FRIEND LIST
-========================================= */
+/* RED CENTER LINE */
 
-function renderFriendList(
-    side,
-    friends,
-    container
-) {
+.vertical-divider {
 
-    container.innerHTML = "";
+    width: 1px;
 
+    background: var(--red);
 
-    if (friends.length === 0) {
-
-        const empty =
-            document.createElement("div");
-
-        empty.className =
-            "empty-list";
-
-        empty.textContent =
-            "NO CONNECTIONS FOUND";
-
-        container.appendChild(
-            empty
-        );
-
-        return;
-    }
-
-
-    friends.forEach(
-        (friend, index) => {
-
-            const item =
-                document.createElement("div");
-
-            item.className =
-                `friend-item ${friend.status}`;
-
-            item.dataset.id =
-                friend.id;
-
-
-            /* NUMBER */
-
-            const number =
-                document.createElement("div");
-
-            number.className =
-                "friend-index";
-
-            number.textContent =
-                String(index + 1)
-                    .padStart(2, "0");
-
-
-            /* NAME */
-
-            const name =
-                document.createElement("div");
-
-            name.className =
-                "friend-name";
-
-            name.textContent =
-                friend.name;
-
-
-            /* DELETE */
-
-            const deleteButton =
-                document.createElement("button");
-
-            deleteButton.className =
-                "friend-delete";
-
-            deleteButton.type =
-                "button";
-
-            deleteButton.textContent =
-                "×";
-
-            deleteButton.title =
-                "Delete friend";
-
-
-            deleteButton.addEventListener(
-                "click",
-                event => {
-
-                    event.stopPropagation();
-
-                    deleteFriend(
-                        side,
-                        friend.id
-                    );
-
-                }
-            );
-
-
-            /* STATUS DOT */
-
-            const status =
-                document.createElement("div");
-
-            status.className =
-                "friend-status";
-
-
-            item.appendChild(
-                number
-            );
-
-            item.appendChild(
-                name
-            );
-
-            item.appendChild(
-                deleteButton
-            );
-
-            item.appendChild(
-                status
-            );
-
-
-            /* CLICK NAME / ROW */
-
-            item.addEventListener(
-                "click",
-                () => {
-
-                    toggleFriendStatus(
-                        side,
-                        friend.id
-                    );
-
-                }
-            );
-
-
-            /* DOUBLE CLICK TO RENAME */
-
-            item.addEventListener(
-                "dblclick",
-                event => {
-
-                    event.stopPropagation();
-
-                    renameFriend(
-                        side,
-                        friend.id
-                    );
-
-                }
-            );
-
-
-            container.appendChild(
-                item
-            );
-
-        }
-    );
-
+    box-shadow:
+        0 0 10px var(--red-glow),
+        0 0 28px rgba(255,37,56,0.10);
 }
 
 
 /* =========================================
-   STATUS TOGGLE
+   PANEL
 ========================================= */
 
-function toggleFriendStatus(
-    side,
-    friendId
-) {
+.panel {
 
-    const board =
-        getActiveBoard();
+    min-width: 0;
 
-    if (!board) {
-        return;
-    }
+    padding:
+        65px
+        clamp(30px, 5vw, 90px)
+        50px;
+}
 
 
-    const friend =
-        board[side].friends.find(
-            friend =>
-                friend.id === friendId
-        );
+/* TITLE */
 
-    if (!friend) {
-        return;
-    }
+.title-input {
 
+    width: 100%;
 
-    /*
-        Cycle:
+    border: none;
 
-        neutral
-            ↓
-        green
-            ↓
-        red
-            ↓
-        neutral
-    */
+    outline: none;
 
-    if (
-        friend.status === "neutral"
-    ) {
+    background: transparent;
 
-        friend.status =
-            "green";
+    color: var(--text);
 
-    }
+    font-family: inherit;
 
-    else if (
-        friend.status === "green"
-    ) {
+    font-size:
+        clamp(30px, 4vw, 55px);
 
-        friend.status =
-            "red";
+    font-weight: 700;
 
-    }
+    letter-spacing: -2px;
 
-    else {
+    text-transform: uppercase;
 
-        friend.status =
-            "neutral";
-
-    }
-
-
-    saveData();
-
-    render();
-
+    margin-bottom: 32px;
 }
 
 
 /* =========================================
-   ADD FRIEND
+   ADD ENTRY
 ========================================= */
 
-function addFriend(
-    side,
-    input
-) {
+.add-entry,
+.shared-add {
 
-    const name =
-        input.value.trim();
+    width: 100%;
 
-    if (!name) {
-        return;
-    }
+    height: 48px;
 
+    display: flex;
 
-    const board =
-        getActiveBoard();
+    border: 1px solid var(--border);
 
-    if (!board) {
-        return;
-    }
+    background: var(--panel);
+
+    margin-bottom: 18px;
+
+    transition: 150ms ease;
+}
 
 
-    board[side].friends.push({
-        id: generateId(),
-        name,
-        status: "neutral"
-    });
+.add-entry:focus-within,
+.shared-add:focus-within {
+
+    border-color: var(--red);
+}
 
 
-    input.value = "";
+.add-entry input,
+.shared-add input {
 
-    saveData();
+    flex: 1;
 
-    render();
+    min-width: 0;
 
-    input.focus();
+    padding: 0 15px;
 
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    color: white;
+
+    font-family: inherit;
+
+    font-size: 11px;
+}
+
+
+.add-entry input::placeholder,
+.shared-add input::placeholder {
+
+    color: var(--dim);
+}
+
+
+.add-entry button,
+.shared-add button {
+
+    width: 48px;
+
+    border: none;
+
+    border-left: 1px solid var(--border);
+
+    background: transparent;
+
+    color: var(--red);
+
+    font-family: inherit;
+
+    font-size: 20px;
+
+    cursor: pointer;
+
+    transition: 150ms ease;
+}
+
+
+.add-entry button:hover,
+.shared-add button:hover {
+
+    background: var(--red);
+
+    color: white;
 }
 
 
 /* =========================================
-   DELETE FRIEND
+   ENTRY LIST
 ========================================= */
 
-function deleteFriend(
-    side,
-    friendId
-) {
+.entry-list {
 
-    const board =
-        getActiveBoard();
+    display: flex;
 
-    if (!board) {
-        return;
-    }
+    flex-direction: column;
 
-
-    board[side].friends =
-        board[side].friends.filter(
-            friend =>
-                friend.id !== friendId
-        );
-
-
-    saveData();
-
-    render();
+    gap: 6px;
 
 }
 
 
-/* =========================================
-   RENAME FRIEND
-========================================= */
+/* ENTRY */
 
-function renameFriend(
-    side,
-    friendId
-) {
+.entry-item {
 
-    const board =
-        getActiveBoard();
+    min-height: 55px;
 
-    if (!board) {
-        return;
-    }
+    display: grid;
 
+    grid-template-columns:
+        40px
+        9px
+        minmax(0, 1fr)
+        auto;
 
-    const friend =
-        board[side].friends.find(
-            friend =>
-                friend.id === friendId
-        );
+    align-items: center;
 
-    if (!friend) {
-        return;
-    }
+    gap: 10px;
 
+    padding-right: 14px;
 
-    const newName =
-        prompt(
-            "Rename friend:",
-            friend.name
-        );
+    background: var(--panel);
 
-    if (newName === null) {
-        return;
-    }
+    border: 1px solid var(--border);
+
+    cursor: pointer;
+
+    transition: 140ms ease;
+
+    position: relative;
+}
 
 
-    const cleanName =
-        newName.trim();
+.entry-item:hover {
 
-    if (!cleanName) {
-        return;
-    }
+    background: var(--panel-hover);
+
+    border-color: var(--border-light);
+
+    transform: translateX(2px);
+}
 
 
-    friend.name =
-        cleanName;
+/* NUMBER */
 
-    saveData();
+.entry-index {
 
-    render();
+    font-size: 8px;
 
+    color: var(--dim);
+
+    text-align: center;
+
+    user-select: none;
+}
+
+
+/* STATUS DOT */
+
+.entry-status {
+
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #454c51;
+}
+
+
+/* NAME */
+
+.entry-name {
+
+    min-width: 0;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    transition: 140ms ease;
+}
+
+
+/* ACTIONS */
+
+.entry-actions {
+
+    display: flex;
+
+    gap: 3px;
+
+    opacity: 0;
+
+    transition: 140ms ease;
+}
+
+
+.entry-item:hover .entry-actions {
+
+    opacity: 1;
+}
+
+
+.entry-actions button {
+
+    width: 27px;
+    height: 27px;
+
+    border: none;
+
+    background: transparent;
+
+    color: var(--dim);
+
+    font-family: inherit;
+
+    cursor: pointer;
+
+    font-size: 12px;
+}
+
+
+.entry-actions button:hover {
+
+    color: white;
+}
+
+
+.entry-actions .delete-entry:hover {
+
+    color: var(--red);
 }
 
 
 /* =========================================
-   CHANGE PERSON NAME
+   GREEN
 ========================================= */
 
-function updatePersonName(
-    side,
-    value
-) {
+.entry-item.green {
 
-    const board =
-        getActiveBoard();
+    border-color:
+        rgba(32, 231, 131, 0.28);
 
-    if (!board) {
-        return;
-    }
+    background:
+        linear-gradient(
+            90deg,
+            rgba(32,231,131,0.07),
+            var(--panel) 30%
+        );
+}
 
 
-    board[side].name =
-        value;
+.entry-item.green .entry-name {
 
-    saveData();
+    color: var(--green);
+}
 
+
+.entry-item.green .entry-status {
+
+    background: var(--green);
+
+    box-shadow:
+        0 0 9px var(--green-glow);
 }
 
 
 /* =========================================
-   NEW BOARD
+   YELLOW
 ========================================= */
 
-function createBoard() {
+.entry-item.yellow {
 
-    const name =
-        prompt(
-            "Name this list:",
-            `LIST ${boards.length + 1}`
+    border-color:
+        rgba(255,212,59,0.3);
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255,212,59,0.07),
+            var(--panel) 30%
         );
-
-    if (name === null) {
-        return;
-    }
+}
 
 
-    const cleanName =
-        name.trim();
+.entry-item.yellow .entry-name {
 
-    if (!cleanName) {
-        return;
-    }
+    color: var(--yellow);
+}
 
 
-    const newBoard = {
+.entry-item.yellow .entry-status {
 
-        id: generateId(),
+    background: var(--yellow);
 
-        name: cleanName,
-
-        left: {
-            name: "PERSON A",
-            friends: []
-        },
-
-        right: {
-            name: "PERSON B",
-            friends: []
-        }
-
-    };
-
-
-    boards.push(
-        newBoard
-    );
-
-    activeBoardId =
-        newBoard.id;
-
-
-    saveData();
-
-    render();
-
+    box-shadow:
+        0 0 9px var(--yellow-glow);
 }
 
 
 /* =========================================
-   RENAME BOARD
+   RED
 ========================================= */
 
-function renameBoard() {
+.entry-item.red {
 
-    const board =
-        getActiveBoard();
+    border-color:
+        rgba(255,37,56,0.32);
 
-    if (!board) {
-        return;
-    }
-
-
-    const name =
-        prompt(
-            "Rename this list:",
-            board.name
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255,37,56,0.07),
+            var(--panel) 30%
         );
-
-    if (name === null) {
-        return;
-    }
+}
 
 
-    const cleanName =
-        name.trim();
+.entry-item.red .entry-name {
 
-    if (!cleanName) {
-        return;
-    }
+    color: var(--red);
+}
 
 
-    board.name =
-        cleanName;
+.entry-item.red .entry-status {
 
-    saveData();
+    background: var(--red);
 
-    render();
-
+    box-shadow:
+        0 0 9px var(--red-glow);
 }
 
 
 /* =========================================
-   DELETE BOARD
+   SHARED SECTION
 ========================================= */
 
-function deleteBoard() {
+.shared-section {
 
-    if (boards.length <= 1) {
+    min-height: 260px;
 
-        alert(
-            "You must keep at least one list."
-        );
+    padding:
+        35px
+        clamp(30px, 8vw, 130px)
+        50px;
 
-        return;
+    border-top: 1px solid var(--red);
 
-    }
-
-
-    const board =
-        getActiveBoard();
-
-    if (!board) {
-        return;
-    }
-
-
-    const confirmed =
-        confirm(
-            `Delete "${board.name}"?`
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    boards =
-        boards.filter(
-            item =>
-                item.id !== board.id
-        );
-
-
-    activeBoardId =
-        boards[0].id;
-
-
-    saveData();
-
-    render();
+    box-shadow:
+        inset 0 8px 25px
+        rgba(255,37,56,0.025);
 
 }
 
 
-/* =========================================
-   EVENTS
-========================================= */
+.shared-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-end;
+
+    margin-bottom: 20px;
+}
 
 
-/* Add friend buttons */
+.shared-header h2 {
 
-leftAddButton.addEventListener(
-    "click",
-    () => {
+    font-size: 19px;
 
-        addFriend(
-            "left",
-            leftFriendInput
+    letter-spacing: 5px;
+
+    font-weight: 700;
+}
+
+
+.shared-header span {
+
+    font-size: 8px;
+
+    color: var(--dim);
+
+    letter-spacing: 2px;
+}
+
+
+.shared-add {
+
+    max-width: 600px;
+}
+
+
+/* SHARED LIST */
+
+.shared-list {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(230px, 1fr)
         );
 
-    }
-);
+    gap: 6px;
+}
 
 
-rightAddButton.addEventListener(
-    "click",
-    () => {
+.shared-list .entry-item {
 
-        addFriend(
-            "right",
-            rightFriendInput
-        );
-
-    }
-);
+    width: 100%;
+}
 
 
-/* Enter to add friend */
+/* EMPTY */
 
-leftFriendInput.addEventListener(
-    "keydown",
-    event => {
+.empty-state {
 
-        if (event.key === "Enter") {
+    width: 100%;
 
-            addFriend(
-                "left",
-                leftFriendInput
-            );
+    padding: 30px;
 
-        }
+    border: 1px dashed var(--border);
 
-    }
-);
+    text-align: center;
 
+    color: var(--dim);
 
-rightFriendInput.addEventListener(
-    "keydown",
-    event => {
+    font-size: 9px;
 
-        if (event.key === "Enter") {
+    letter-spacing: 2px;
 
-            addFriend(
-                "right",
-                rightFriendInput
-            );
-
-        }
-
-    }
-);
-
-
-/* Person names */
-
-leftPersonName.addEventListener(
-    "input",
-    () => {
-
-        updatePersonName(
-            "left",
-            leftPersonName.value
-        );
-
-    }
-);
-
-
-rightPersonName.addEventListener(
-    "input",
-    () => {
-
-        updatePersonName(
-            "right",
-            rightPersonName.value
-        );
-
-    }
-);
-
-
-/* Board selector */
-
-boardSelect.addEventListener(
-    "change",
-    () => {
-
-        activeBoardId =
-            boardSelect.value;
-
-        saveData();
-
-        render();
-
-    }
-);
-
-
-/* Board management */
-
-newBoardButton.addEventListener(
-    "click",
-    createBoard
-);
-
-renameBoardButton.addEventListener(
-    "click",
-    renameBoard
-);
-
-deleteBoardButton.addEventListener(
-    "click",
-    deleteBoard
-);
+    grid-column: 1 / -1;
+}
 
 
 /* =========================================
-   START APPLICATION
+   MOBILE
 ========================================= */
 
-loadData();
+@media (max-width: 750px) {
 
-render();
+    .top-lists {
+
+        grid-template-columns: 1fr;
+
+        grid-template-rows:
+            auto
+            1px
+            auto;
+    }
+
+
+    .vertical-divider {
+
+        width: 100%;
+
+        height: 1px;
+    }
+
+
+    .panel {
+
+        padding:
+            65px
+            20px
+            35px;
+    }
+
+
+    .shared-section {
+
+        padding:
+            30px
+            20px
+            40px;
+    }
+
+
+    .shared-header {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 8px;
+    }
+
+
+    .board-menu-toggle {
+
+        top: 12px;
+        right: 12px;
+    }
+
+
+    .board-menu {
+
+        right: 12px;
+    }
+
+}
