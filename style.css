@@ -1,870 +1,1672 @@
-/* =========================================
-   RESET
-========================================= */
+const STORAGE_KEY =
+    "genericListBoards_v2";
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+const OLD_STORAGE_KEY =
+    "friendListBoards_v1";
 
-:root {
-    --background: #050607;
-    --background-secondary: #090b0d;
 
-    --panel: #0b0e10;
-    --panel-light: #101417;
-    --panel-hover: #14191d;
-
-    --border: #20262b;
-    --border-bright: #30383e;
-
-    --text: #f4f4f4;
-    --text-secondary: #8a949c;
-    --text-dark: #555e65;
-
-    --red: #ff2638;
-    --red-dark: #80121d;
-    --red-glow: rgba(255, 38, 56, 0.22);
-
-    --green: #22e784;
-    --green-dark: #0c6d3e;
-    --green-glow: rgba(34, 231, 132, 0.14);
-
-    --transition: 160ms ease;
-}
+let boards = [];
+let activeBoardId = null;
 
 
 /* =========================================
-   BODY
+   ELEMENTS
 ========================================= */
 
-html,
-body {
-    min-height: 100%;
-}
+const boardMenuToggle =
+    document.getElementById("boardMenuToggle");
 
-body {
-    min-height: 100vh;
+const boardMenu =
+    document.getElementById("boardMenu");
 
-    background:
-        radial-gradient(
-            circle at 50% 0%,
-            rgba(255, 38, 56, 0.045),
-            transparent 35%
-        ),
-        var(--background);
+const boardSelect =
+    document.getElementById("boardSelect");
 
-    color: var(--text);
+const newBoardButton =
+    document.getElementById("newBoardButton");
 
-    font-family:
-        "SFMono-Regular",
-        "SF Mono",
-        "Roboto Mono",
-        "Cascadia Code",
-        "Liberation Mono",
-        monospace;
+const renameBoardButton =
+    document.getElementById("renameBoardButton");
 
-    overflow-x: hidden;
-}
+const deleteBoardButton =
+    document.getElementById("deleteBoardButton");
 
 
-/* subtle tech grid */
+const leftPersonName =
+    document.getElementById("leftPersonName");
 
-body::before {
-    content: "";
+const rightPersonName =
+    document.getElementById("rightPersonName");
 
-    position: fixed;
-    inset: 0;
 
-    pointer-events: none;
+const leftEntryInput =
+    document.getElementById("leftEntryInput");
 
-    background-image:
-        linear-gradient(
-            rgba(255, 255, 255, 0.014) 1px,
-            transparent 1px
-        ),
-        linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0.014) 1px,
-            transparent 1px
-        );
+const rightEntryInput =
+    document.getElementById("rightEntryInput");
 
-    background-size: 40px 40px;
 
-    mask-image:
-        linear-gradient(
-            to bottom,
-            black,
-            transparent 90%
-        );
-}
+const leftAddButton =
+    document.getElementById("leftAddButton");
+
+const rightAddButton =
+    document.getElementById("rightAddButton");
+
+
+const leftEntryList =
+    document.getElementById("leftEntryList");
+
+const rightEntryList =
+    document.getElementById("rightEntryList");
+
+
+const sharedEntryInput =
+    document.getElementById("sharedEntryInput");
+
+const sharedAddButton =
+    document.getElementById("sharedAddButton");
+
+const sharedEntryList =
+    document.getElementById("sharedEntryList");
 
 
 /* =========================================
-   APP
+   HELPERS
 ========================================= */
 
-.app {
-    min-height: 100vh;
+function generateId() {
 
-    display: flex;
-    flex-direction: column;
+    return (
+        Date.now().toString(36) +
+        Math.random()
+            .toString(36)
+            .substring(2, 9)
+    );
 
-    position: relative;
+}
+
+
+function normalizeName(name) {
+
+    return name
+        .trim()
+        .toLowerCase();
+
+}
+
+
+function normalizeStatus(status) {
+
+    const allowed = [
+        "neutral",
+        "green",
+        "yellow",
+        "red"
+    ];
+
+    return allowed.includes(status)
+        ? status
+        : "neutral";
+
 }
 
 
 /* =========================================
-   TOPBAR
+   DEFAULT DATA
 ========================================= */
 
-.topbar {
-    min-height: 82px;
+function createDefaultBoard() {
 
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    return {
 
-    padding: 16px 24px;
+        id: generateId(),
 
-    border-bottom: 1px solid var(--border);
+        name: "LIST 01",
 
-    background:
-        rgba(5, 6, 7, 0.94);
+        left: {
 
-    backdrop-filter: blur(15px);
+            name: "PERSON A",
 
-    position: relative;
-    z-index: 20;
+            entries: [
+                {
+                    id: generateId(),
+                    name: "Entry 01",
+                    status: "neutral"
+                },
+
+                {
+                    id: generateId(),
+                    name: "Entry 02",
+                    status: "neutral"
+                }
+            ]
+
+        },
+
+        right: {
+
+            name: "PERSON B",
+
+            entries: [
+                {
+                    id: generateId(),
+                    name: "Entry 01",
+                    status: "neutral"
+                },
+
+                {
+                    id: generateId(),
+                    name: "Entry 03",
+                    status: "neutral"
+                }
+            ]
+
+        }
+
+    };
+
 }
 
 
 /* =========================================
-   BRAND
+   OLD DATA MIGRATION
 ========================================= */
 
-.brand {
-    display: flex;
-    align-items: center;
+function normalizeBoard(board) {
 
-    gap: 14px;
-}
+    function normalizeSide(side, defaultName) {
 
-.brand-icon {
-    width: 13px;
-    height: 42px;
+        const oldEntries =
+            side?.entries ||
+            side?.friends ||
+            [];
 
-    background: var(--red);
+        return {
 
-    box-shadow:
-        0 0 8px rgba(255, 38, 56, 0.6),
-        0 0 24px rgba(255, 38, 56, 0.2);
-}
+            name:
+                side?.name ||
+                defaultName,
 
-.brand-title {
-    font-weight: 700;
-    font-size: 17px;
+            entries:
+                oldEntries.map(entry => ({
 
-    letter-spacing: 2px;
-}
+                    id:
+                        entry.id ||
+                        generateId(),
 
-.brand-subtitle {
-    margin-top: 4px;
+                    name:
+                        entry.name ||
+                        "Entry",
 
-    color: var(--text-secondary);
+                    status:
+                        normalizeStatus(
+                            entry.status
+                        )
 
-    font-size: 9px;
+                }))
 
-    letter-spacing: 3px;
-}
+        };
 
-
-/* =========================================
-   BOARD CONTROLS
-========================================= */
-
-.board-controls {
-    display: flex;
-    align-items: center;
-
-    gap: 7px;
-}
-
-#boardSelect {
-    height: 38px;
-
-    min-width: 160px;
-
-    padding: 0 34px 0 12px;
-
-    background: var(--panel);
-
-    border: 1px solid var(--border);
-
-    color: var(--text);
-
-    font-family: inherit;
-
-    font-size: 11px;
-
-    outline: none;
-
-    cursor: pointer;
-}
-
-#boardSelect:hover,
-#boardSelect:focus {
-    border-color: var(--border-bright);
-}
-
-
-/* =========================================
-   BUTTONS
-========================================= */
-
-.button {
-    height: 38px;
-
-    padding: 0 13px;
-
-    font-family: inherit;
-
-    font-size: 10px;
-    font-weight: 700;
-
-    letter-spacing: 1px;
-
-    color: var(--text);
-
-    background: transparent;
-
-    border: 1px solid var(--border);
-
-    cursor: pointer;
-
-    transition:
-        border-color var(--transition),
-        background-color var(--transition),
-        color var(--transition);
-}
-
-.secondary-button:hover {
-    background: var(--panel-light);
-    border-color: var(--text-secondary);
-}
-
-.danger-button {
-    color: var(--red);
-}
-
-.danger-button:hover {
-    background: rgba(255, 38, 56, 0.1);
-    border-color: var(--red);
-}
-
-
-/* =========================================
-   SPLIT VIEW
-========================================= */
-
-.lists-container {
-    flex: 1;
-
-    min-height: 0;
-
-    display: grid;
-
-    grid-template-columns:
-        minmax(0, 1fr)
-        1px
-        minmax(0, 1fr);
-
-    position: relative;
-}
-
-
-/* =========================================
-   CENTER DIVIDER
-========================================= */
-
-.center-divider {
-    width: 1px;
-
-    background: var(--red);
-
-    position: relative;
-
-    box-shadow:
-        0 0 10px var(--red-glow),
-        0 0 25px rgba(255, 38, 56, 0.08);
-
-    z-index: 5;
-}
-
-.divider-glow {
-    width: 9px;
-
-    position: absolute;
-
-    top: 0;
-    bottom: 0;
-    left: -4px;
-
-    background:
-        linear-gradient(
-            to right,
-            transparent,
-            rgba(255, 38, 56, 0.05),
-            transparent
-        );
-
-    pointer-events: none;
-}
-
-.divider-text {
-    position: absolute;
-
-    left: 50%;
-    top: 50%;
-
-    transform:
-        translate(-50%, -50%)
-        rotate(90deg);
-
-    padding: 5px 12px;
-
-    background: var(--background);
-
-    color: var(--red);
-
-    font-size: 8px;
-
-    letter-spacing: 5px;
-}
-
-
-/* =========================================
-   PERSON PANEL
-========================================= */
-
-.person-panel {
-    padding: 40px clamp(24px, 4vw, 70px);
-
-    min-width: 0;
-}
-
-
-/* =========================================
-   PERSON HEADER
-========================================= */
-
-.person-header {
-    margin-bottom: 32px;
-
-    border-bottom: 1px solid var(--border);
-
-    padding-bottom: 22px;
-}
-
-.person-number {
-    color: var(--red);
-
-    font-size: 9px;
-    font-weight: 700;
-
-    letter-spacing: 3px;
-
-    margin-bottom: 10px;
-}
-
-.person-name-input {
-    width: 100%;
-
-    border: none;
-    outline: none;
-
-    background: transparent;
-
-    color: var(--text);
-
-    font-family: inherit;
-
-    font-size:
-        clamp(27px, 3vw, 48px);
-
-    font-weight: 700;
-
-    letter-spacing: -2px;
-
-    text-transform: uppercase;
-}
-
-.person-name-input:focus {
-    color: white;
-}
-
-.friend-count {
-    margin-top: 11px;
-
-    font-size: 9px;
-
-    color: var(--text-secondary);
-
-    letter-spacing: 2px;
-}
-
-
-/* =========================================
-   ADD FRIEND
-========================================= */
-
-.add-friend {
-    height: 50px;
-
-    display: flex;
-
-    border: 1px solid var(--border);
-
-    background: var(--panel);
-
-    margin-bottom: 18px;
-
-    transition:
-        border-color var(--transition),
-        box-shadow var(--transition);
-}
-
-.add-friend:focus-within {
-    border-color: var(--red);
-
-    box-shadow:
-        0 0 0 1px rgba(255, 38, 56, 0.08);
-}
-
-.add-friend input {
-    flex: 1;
-
-    min-width: 0;
-
-    padding: 0 16px;
-
-    border: none;
-    outline: none;
-
-    background: transparent;
-
-    color: var(--text);
-
-    font-family: inherit;
-
-    font-size: 12px;
-}
-
-.add-friend input::placeholder {
-    color: var(--text-dark);
-}
-
-.add-friend button {
-    width: 50px;
-
-    flex-shrink: 0;
-
-    border: none;
-    border-left: 1px solid var(--border);
-
-    background: transparent;
-
-    color: var(--red);
-
-    font-family: inherit;
-
-    font-size: 22px;
-
-    cursor: pointer;
-
-    transition:
-        background-color var(--transition),
-        color var(--transition);
-}
-
-.add-friend button:hover {
-    background: var(--red);
-    color: white;
-}
-
-
-/* =========================================
-   FRIEND LIST
-========================================= */
-
-.friend-list {
-    display: flex;
-    flex-direction: column;
-
-    gap: 6px;
-}
-
-
-/* =========================================
-   FRIEND ITEM
-========================================= */
-
-.friend-item {
-    height: 58px;
-
-    display: grid;
-
-    grid-template-columns:
-        38px
-        minmax(0, 1fr)
-        40px;
-
-    align-items: center;
-
-    background: var(--panel);
-
-    border: 1px solid var(--border);
-
-    cursor: pointer;
-
-    transition:
-        background-color var(--transition),
-        border-color var(--transition),
-        transform var(--transition),
-        box-shadow var(--transition);
-}
-
-.friend-item:hover {
-    background: var(--panel-hover);
-
-    border-color: var(--border-bright);
-
-    transform: translateX(2px);
-}
-
-
-/* Number */
-
-.friend-index {
-    color: var(--text-dark);
-
-    font-size: 9px;
-
-    text-align: center;
-
-    user-select: none;
-}
-
-
-/* Name */
-
-.friend-name {
-    min-width: 0;
-
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-
-    font-size: 13px;
-
-    letter-spacing: 0.5px;
-
-    color: var(--text-secondary);
-
-    transition:
-        color var(--transition),
-        text-shadow var(--transition);
-}
-
-
-/* Status indicator */
-
-.friend-status {
-    width: 7px;
-    height: 7px;
-
-    border-radius: 50%;
-
-    justify-self: center;
-
-    background: #3d454b;
-
-    transition:
-        background-color var(--transition),
-        box-shadow var(--transition);
-}
-
-
-/* DELETE BUTTON */
-
-.friend-delete {
-    display: none;
-
-    position: absolute;
-
-    right: 48px;
-
-    color: var(--text-dark);
-
-    border: none;
-
-    background: transparent;
-
-    font-family: inherit;
-
-    cursor: pointer;
-
-    padding: 7px;
-
-    font-size: 12px;
-}
-
-.friend-delete:hover {
-    color: var(--red);
-}
-
-.friend-item {
-    position: relative;
-}
-
-.friend-item:hover .friend-delete {
-    display: block;
-}
-
-
-/* =========================================
-   GREEN STATUS
-========================================= */
-
-.friend-item.green {
-    border-color:
-        rgba(34, 231, 132, 0.28);
-
-    background:
-        linear-gradient(
-            90deg,
-            rgba(34, 231, 132, 0.065),
-            var(--panel) 30%
-        );
-}
-
-.friend-item.green .friend-name {
-    color: var(--green);
-
-    text-shadow:
-        0 0 14px var(--green-glow);
-}
-
-.friend-item.green .friend-status {
-    background: var(--green);
-
-    box-shadow:
-        0 0 7px rgba(34, 231, 132, 0.65);
-}
-
-
-/* =========================================
-   RED STATUS
-========================================= */
-
-.friend-item.red {
-    border-color:
-        rgba(255, 38, 56, 0.32);
-
-    background:
-        linear-gradient(
-            90deg,
-            rgba(255, 38, 56, 0.065),
-            var(--panel) 30%
-        );
-}
-
-.friend-item.red .friend-name {
-    color: var(--red);
-
-    text-shadow:
-        0 0 14px var(--red-glow);
-}
-
-.friend-item.red .friend-status {
-    background: var(--red);
-
-    box-shadow:
-        0 0 7px rgba(255, 38, 56, 0.65);
-}
-
-
-/* =========================================
-   EMPTY LIST
-========================================= */
-
-.empty-list {
-    padding: 40px 20px;
-
-    border: 1px dashed var(--border);
-
-    color: var(--text-dark);
-
-    font-size: 10px;
-
-    text-align: center;
-
-    letter-spacing: 2px;
-}
-
-
-/* =========================================
-   STATUS BAR
-========================================= */
-
-.status-bar {
-    min-height: 48px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    padding: 0 24px;
-
-    border-top: 1px solid var(--border);
-
-    background: rgba(5, 6, 7, 0.95);
-
-    font-size: 8px;
-
-    letter-spacing: 2px;
-
-    color: var(--text-secondary);
-}
-
-.legend {
-    display: flex;
-    align-items: center;
-
-    gap: 22px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-
-    gap: 7px;
-}
-
-.status-dot {
-    width: 6px;
-    height: 6px;
-
-    border-radius: 50%;
-}
-
-.status-dot.green {
-    background: var(--green);
-}
-
-.status-dot.red {
-    background: var(--red);
-}
-
-.status-dot.neutral {
-    background: #555e65;
-}
-
-
-/* =========================================
-   RESPONSIVE
-========================================= */
-
-@media (max-width: 800px) {
-
-    .topbar {
-        flex-direction: column;
-        align-items: stretch;
-
-        gap: 18px;
     }
 
-    .board-controls {
-        width: 100%;
 
-        flex-wrap: wrap;
-    }
+    return {
 
-    #boardSelect {
-        flex: 1;
-    }
+        id:
+            board.id ||
+            generateId(),
 
-    .lists-container {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1px auto;
-    }
+        name:
+            board.name ||
+            "LIST",
 
-    .center-divider {
-        width: 100%;
-        height: 1px;
-    }
+        left:
+            normalizeSide(
+                board.left,
+                "PERSON A"
+            ),
 
-    .divider-glow {
-        width: 100%;
-        height: 9px;
+        right:
+            normalizeSide(
+                board.right,
+                "PERSON B"
+            )
 
-        top: -4px;
-        left: 0;
+    };
 
-        background:
-            linear-gradient(
-                to bottom,
-                transparent,
-                rgba(255, 38, 56, 0.08),
-                transparent
+}
+
+
+/* =========================================
+   STORAGE
+========================================= */
+
+function loadData() {
+
+    let savedData = null;
+
+
+    try {
+
+        const current =
+            localStorage.getItem(
+                STORAGE_KEY
             );
+
+        if (current) {
+
+            savedData =
+                JSON.parse(current);
+
+        }
+
+        else {
+
+            const old =
+                localStorage.getItem(
+                    OLD_STORAGE_KEY
+                );
+
+            if (old) {
+
+                savedData =
+                    JSON.parse(old);
+
+            }
+
+        }
+
     }
 
-    .divider-text {
-        transform:
-            translate(-50%, -50%);
+    catch (error) {
 
-        letter-spacing: 4px;
+        console.error(
+            "Storage error:",
+            error
+        );
+
     }
 
-    .person-panel {
-        padding:
-            32px 20px;
+
+    if (
+        savedData &&
+        Array.isArray(savedData.boards) &&
+        savedData.boards.length
+    ) {
+
+        boards =
+            savedData.boards.map(
+                normalizeBoard
+            );
+
+        activeBoardId =
+            savedData.activeBoardId;
+
     }
 
-    .status-bar {
-        flex-direction: column;
+    else {
 
-        gap: 10px;
+        const board =
+            createDefaultBoard();
 
-        align-items: flex-start;
+        boards = [board];
 
-        padding: 14px 20px;
+        activeBoardId =
+            board.id;
+
     }
 
-    .instruction {
-        display: none;
+
+    if (
+        !boards.some(
+            board =>
+                board.id ===
+                activeBoardId
+        )
+    ) {
+
+        activeBoardId =
+            boards[0].id;
+
     }
+
+
+    saveData();
+
 }
 
 
-@media (max-width: 500px) {
+function saveData() {
 
-    .brand-title {
-        font-size: 14px;
-    }
+    localStorage.setItem(
+        STORAGE_KEY,
 
-    .board-controls .button {
-        flex: 1;
-    }
+        JSON.stringify({
 
-    #boardSelect {
-        flex-basis: 100%;
-    }
+            boards,
+            activeBoardId
 
-    .legend {
-        gap: 14px;
+        })
+    );
+
+}
+
+
+/* =========================================
+   BOARD
+========================================= */
+
+function getActiveBoard() {
+
+    return boards.find(
+        board =>
+            board.id ===
+            activeBoardId
+    );
+
+}
+
+
+/* =========================================
+   STATUS CYCLE
+========================================= */
+
+function getNextStatus(status) {
+
+    /*
+        neutral
+          ↓
+        green
+          ↓
+        yellow
+          ↓
+        red
+          ↓
+        neutral
+    */
+
+    switch (status) {
+
+        case "neutral":
+            return "green";
+
+        case "green":
+            return "yellow";
+
+        case "yellow":
+            return "red";
+
+        default:
+            return "neutral";
+
     }
 
 }
+
+
+/* =========================================
+   RENDER
+========================================= */
+
+function render() {
+
+    renderBoardSelector();
+
+
+    const board =
+        getActiveBoard();
+
+    if (!board) {
+        return;
+    }
+
+
+    if (
+        document.activeElement !==
+        leftPersonName
+    ) {
+
+        leftPersonName.value =
+            board.left.name;
+
+    }
+
+
+    if (
+        document.activeElement !==
+        rightPersonName
+    ) {
+
+        rightPersonName.value =
+            board.right.name;
+
+    }
+
+
+    renderEntryList(
+        "left",
+        board.left.entries,
+        leftEntryList
+    );
+
+
+    renderEntryList(
+        "right",
+        board.right.entries,
+        rightEntryList
+    );
+
+
+    renderSharedList();
+
+}
+
+
+/* =========================================
+   BOARD SELECT
+========================================= */
+
+function renderBoardSelector() {
+
+    boardSelect.innerHTML = "";
+
+
+    boards.forEach(board => {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value =
+            board.id;
+
+        option.textContent =
+            board.name;
+
+        option.selected =
+            board.id ===
+            activeBoardId;
+
+
+        boardSelect.appendChild(
+            option
+        );
+
+    });
+
+}
+
+
+/* =========================================
+   ENTRY LIST
+========================================= */
+
+function renderEntryList(
+    side,
+    entries,
+    container
+) {
+
+    container.innerHTML = "";
+
+
+    if (!entries.length) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "empty-state";
+
+        empty.textContent =
+            "NO ENTRIES";
+
+        container.appendChild(
+            empty
+        );
+
+        return;
+
+    }
+
+
+    entries.forEach(
+        (entry, index) => {
+
+            const item =
+                createEntryElement({
+
+                    entry,
+
+                    index,
+
+                    onStatus() {
+
+                        cycleEntry(
+                            side,
+                            entry.id
+                        );
+
+                    },
+
+                    onRename() {
+
+                        renameEntry(
+                            side,
+                            entry.id
+                        );
+
+                    },
+
+                    onDelete() {
+
+                        deleteEntry(
+                            side,
+                            entry.id
+                        );
+
+                    }
+
+                });
+
+
+            container.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================
+   CREATE ENTRY HTML
+========================================= */
+
+function createEntryElement({
+    entry,
+    index,
+    onStatus,
+    onRename,
+    onDelete
+}) {
+
+    const item =
+        document.createElement("div");
+
+    item.className =
+        `entry-item ${entry.status}`;
+
+
+    const number =
+        document.createElement("div");
+
+    number.className =
+        "entry-index";
+
+    number.textContent =
+        String(index + 1)
+            .padStart(2, "0");
+
+
+    const status =
+        document.createElement("div");
+
+    status.className =
+        "entry-status";
+
+
+    const name =
+        document.createElement("div");
+
+    name.className =
+        "entry-name";
+
+    name.textContent =
+        entry.name;
+
+
+    const actions =
+        document.createElement("div");
+
+    actions.className =
+        "entry-actions";
+
+
+    const edit =
+        document.createElement("button");
+
+    edit.type = "button";
+
+    edit.textContent = "✎";
+
+    edit.title = "Rename";
+
+
+    const remove =
+        document.createElement("button");
+
+    remove.type = "button";
+
+    remove.textContent = "×";
+
+    remove.title = "Delete";
+
+    remove.className =
+        "delete-entry";
+
+
+    edit.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            onRename();
+
+        }
+    );
+
+
+    remove.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            onDelete();
+
+        }
+    );
+
+
+    item.addEventListener(
+        "click",
+        onStatus
+    );
+
+
+    actions.appendChild(edit);
+
+    actions.appendChild(remove);
+
+
+    item.appendChild(number);
+
+    item.appendChild(status);
+
+    item.appendChild(name);
+
+    item.appendChild(actions);
+
+
+    return item;
+
+}
+
+
+/* =========================================
+   ADD ENTRY
+========================================= */
+
+function addEntry(
+    side,
+    input
+) {
+
+    const name =
+        input.value.trim();
+
+    if (!name) {
+        return;
+    }
+
+
+    const board =
+        getActiveBoard();
+
+    if (!board) {
+        return;
+    }
+
+
+    board[side].entries.push({
+
+        id: generateId(),
+
+        name,
+
+        status: "neutral"
+
+    });
+
+
+    input.value = "";
+
+
+    saveData();
+
+    render();
+
+    input.focus();
+
+}
+
+
+/* =========================================
+   STATUS
+========================================= */
+
+function cycleEntry(
+    side,
+    entryId
+) {
+
+    const board =
+        getActiveBoard();
+
+
+    const entry =
+        board[side].entries.find(
+            entry =>
+                entry.id ===
+                entryId
+        );
+
+
+    if (!entry) {
+        return;
+    }
+
+
+    entry.status =
+        getNextStatus(
+            entry.status
+        );
+
+
+    saveData();
+
+    render();
+
+}
+
+
+/* =========================================
+   DELETE
+========================================= */
+
+function deleteEntry(
+    side,
+    entryId
+) {
+
+    const board =
+        getActiveBoard();
+
+
+    board[side].entries =
+        board[side].entries.filter(
+            entry =>
+                entry.id !==
+                entryId
+        );
+
+
+    saveData();
+
+    render();
+
+}
+
+
+/* =========================================
+   RENAME
+========================================= */
+
+function renameEntry(
+    side,
+    entryId
+) {
+
+    const board =
+        getActiveBoard();
+
+
+    const entry =
+        board[side].entries.find(
+            entry =>
+                entry.id ===
+                entryId
+        );
+
+
+    if (!entry) {
+        return;
+    }
+
+
+    const newName =
+        prompt(
+            "Rename entry:",
+            entry.name
+        );
+
+
+    if (newName === null) {
+        return;
+    }
+
+
+    const name =
+        newName.trim();
+
+
+    if (!name) {
+        return;
+    }
+
+
+    entry.name = name;
+
+
+    saveData();
+
+    render();
+
+}
+
+
+/* =========================================
+   SHARED ENTRIES
+========================================= */
+
+function getSharedEntries() {
+
+    const board =
+        getActiveBoard();
+
+
+    if (!board) {
+        return [];
+    }
+
+
+    const rightMap =
+        new Map();
+
+
+    board.right.entries.forEach(
+        entry => {
+
+            const key =
+                normalizeName(
+                    entry.name
+                );
+
+
+            if (
+                !rightMap.has(key)
+            ) {
+
+                rightMap.set(
+                    key,
+                    entry
+                );
+
+            }
+
+        }
+    );
+
+
+    const shared = [];
+
+    const seen =
+        new Set();
+
+
+    board.left.entries.forEach(
+        leftEntry => {
+
+            const key =
+                normalizeName(
+                    leftEntry.name
+                );
+
+
+            if (
+                seen.has(key) ||
+                !rightMap.has(key)
+            ) {
+
+                return;
+
+            }
+
+
+            seen.add(key);
+
+
+            const rightEntry =
+                rightMap.get(key);
+
+
+            const sameStatus =
+                leftEntry.status ===
+                rightEntry.status;
+
+
+            shared.push({
+
+                name:
+                    leftEntry.name,
+
+                leftId:
+                    leftEntry.id,
+
+                rightId:
+                    rightEntry.id,
+
+                status:
+                    sameStatus
+                        ? leftEntry.status
+                        : "neutral"
+
+            });
+
+        }
+    );
+
+
+    return shared;
+
+}
+
+
+/* =========================================
+   RENDER SHARED
+========================================= */
+
+function renderSharedList() {
+
+    sharedEntryList.innerHTML = "";
+
+
+    const shared =
+        getSharedEntries();
+
+
+    if (!shared.length) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "empty-state";
+
+        empty.textContent =
+            "NO SHARED ENTRIES";
+
+        sharedEntryList.appendChild(
+            empty
+        );
+
+        return;
+
+    }
+
+
+    shared.forEach(
+        (entry, index) => {
+
+            const item =
+                createEntryElement({
+
+                    entry,
+
+                    index,
+
+                    onStatus() {
+
+                        cycleSharedEntry(
+                            entry
+                        );
+
+                    },
+
+                    onRename() {
+
+                        renameSharedEntry(
+                            entry
+                        );
+
+                    },
+
+                    onDelete() {
+
+                        deleteSharedEntry(
+                            entry
+                        );
+
+                    }
+
+                });
+
+
+            sharedEntryList.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================
+   ADD SHARED
+========================================= */
+
+function addSharedEntry() {
+
+    const name =
+        sharedEntryInput.value.trim();
+
+
+    if (!name) {
+        return;
+    }
+
+
+    const board =
+        getActiveBoard();
+
+
+    const key =
+        normalizeName(name);
+
+
+    let left =
+        board.left.entries.find(
+            entry =>
+                normalizeName(
+                    entry.name
+                ) === key
+        );
+
+
+    let right =
+        board.right.entries.find(
+            entry =>
+                normalizeName(
+                    entry.name
+                ) === key
+        );
+
+
+    if (!left) {
+
+        left = {
+
+            id: generateId(),
+
+            name,
+
+            status: "neutral"
+
+        };
+
+
+        board.left.entries.push(
+            left
+        );
+
+    }
+
+
+    if (!right) {
+
+        right = {
+
+            id: generateId(),
+
+            name,
+
+            status: left.status
+
+        };
+
+
+        board.right.entries.push(
+            right
+        );
+
+    }
+
+
+    sharedEntryInput.value = "";
+
+
+    saveData();
+
+    render();
+
+    sharedEntryInput.focus();
+
+}
+
+
+/* =========================================
+   SHARED STATUS
+========================================= */
+
+function cycleSharedEntry(
+    shared
+) {
+
+    const board =
+        getActiveBoard();
+
+
+    const left =
+        board.left.entries.find(
+            entry =>
+                entry.id ===
+                shared.leftId
+        );
+
+
+    const right =
+        board.right.entries.find(
+            entry =>
+                entry.id ===
+                shared.rightId
+        );
+
+
+    if (!left || !right) {
+        return;
+    }
+
+
+    const current =
+        left.status ===
+        right.status
+            ? left.status
+            : "neutral";
+
+
+    const next =
+        getNextStatus(
+            current
+        );
+
+
+    left.status = next;
+
+    right.status = next;
+
+
+    saveData();
+
+    render();
+
+}
+
+
+/* =========================================
+   RENAME SHARED
+========================================= */
+
+function renameSharedEntry(
+    shared
+) {
+
+    const name =
+        prompt(
+            "Rename entry:",
+            shared.name
+        );
+
+
+    if (name === null) {
+        return;
+    }
+
+
+    const clean =
+        name.trim();
+
+
+    if (!clean) {
+        return;
+    }
+
+
+    const board =
+        getActiveBoard();
+
+
+    const left =
+        board.left.entries.find(
+            entry =>
+                entry.id ===
+                shared.leftId
+        );
+
+
+    const right =
+        board.right.entries.find(
+            entry =>
+                entry.id ===
+                shared.rightId
+        );
+
+
+    if (left) {
+        left.name = clean;
+    }
+
+
+    if (right) {
+        right.name = clean;
+    }
+
+
+    saveData();
+
+    render();
+
+}
+
+
+/* =========================================
+   DELETE SHARED
+========================================= */
+
+function deleteSharedEntry(
+    shared
+) {
+
+    const board =
+        getActiveBoard();
+
+
+    board.left.entries =
+        board.left.entries.filter(
+            entry =>
+                entry.id !==
+                shared.leftId
+        );
+
+
+    board.right.entries =
+        board.right.entries.filter(
+            entry =>
+                entry.id !==
+                shared.rightId
+        );
+
+
+    saveData();
+
+    render();
+
+}
+
+
+/* =========================================
+   TITLES
+========================================= */
+
+leftPersonName.addEventListener(
+    "input",
+    () => {
+
+        const board =
+            getActiveBoard();
+
+        board.left.name =
+            leftPersonName.value;
+
+        saveData();
+
+    }
+);
+
+
+rightPersonName.addEventListener(
+    "input",
+    () => {
+
+        const board =
+            getActiveBoard();
+
+        board.right.name =
+            rightPersonName.value;
+
+        saveData();
+
+    }
+);
+
+
+/* =========================================
+   BOARD MANAGEMENT
+========================================= */
+
+function createBoard() {
+
+    const name =
+        prompt(
+            "List name:",
+            `LIST ${String(
+                boards.length + 1
+            ).padStart(2, "0")}`
+        );
+
+
+    if (name === null) {
+        return;
+    }
+
+
+    const clean =
+        name.trim();
+
+
+    if (!clean) {
+        return;
+    }
+
+
+    const board = {
+
+        id: generateId(),
+
+        name: clean,
+
+        left: {
+
+            name: "PERSON A",
+
+            entries: []
+
+        },
+
+        right: {
+
+            name: "PERSON B",
+
+            entries: []
+
+        }
+
+    };
+
+
+    boards.push(board);
+
+    activeBoardId =
+        board.id;
+
+
+    saveData();
+
+    render();
+
+}
+
+
+function renameBoard() {
+
+    const board =
+        getActiveBoard();
+
+
+    const name =
+        prompt(
+            "Rename list:",
+            board.name
+        );
+
+
+    if (name === null) {
+        return;
+    }
+
+
+    const clean =
+        name.trim();
+
+
+    if (!clean) {
+        return;
+    }
+
+
+    board.name =
+        clean;
+
+
+    saveData();
+
+    render();
+
+}
+
+
+function deleteBoard() {
+
+    if (boards.length === 1) {
+
+        alert(
+            "You must keep at least one list."
+        );
+
+        return;
+
+    }
+
+
+    const board =
+        getActiveBoard();
+
+
+    if (
+        !confirm(
+            `Delete "${board.name}"?`
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    boards =
+        boards.filter(
+            item =>
+                item.id !==
+                board.id
+        );
+
+
+    activeBoardId =
+        boards[0].id;
+
+
+    saveData();
+
+    render();
+
+}
+
+
+/* =========================================
+   ADD BUTTON EVENTS
+========================================= */
+
+leftAddButton.addEventListener(
+    "click",
+    () =>
+        addEntry(
+            "left",
+            leftEntryInput
+        )
+);
+
+
+rightAddButton.addEventListener(
+    "click",
+    () =>
+        addEntry(
+            "right",
+            rightEntryInput
+        )
+);
+
+
+sharedAddButton.addEventListener(
+    "click",
+    addSharedEntry
+);
+
+
+/* ENTER */
+
+leftEntryInput.addEventListener(
+    "keydown",
+    event => {
+
+        if (event.key === "Enter") {
+
+            addEntry(
+                "left",
+                leftEntryInput
+            );
+
+        }
+
+    }
+);
+
+
+rightEntryInput.addEventListener(
+    "keydown",
+    event => {
+
+        if (event.key === "Enter") {
+
+            addEntry(
+                "right",
+                rightEntryInput
+            );
+
+        }
+
+    }
+);
+
+
+sharedEntryInput.addEventListener(
+    "keydown",
+    event => {
+
+        if (event.key === "Enter") {
+
+            addSharedEntry();
+
+        }
+
+    }
+);
+
+
+/* =========================================
+   LIST MANAGER
+========================================= */
+
+boardMenuToggle.addEventListener(
+    "click",
+    event => {
+
+        event.stopPropagation();
+
+        boardMenu.classList.toggle(
+            "open"
+        );
+
+    }
+);
+
+
+boardMenu.addEventListener(
+    "click",
+    event => {
+
+        event.stopPropagation();
+
+    }
+);
+
+
+document.addEventListener(
+    "click",
+    () => {
+
+        boardMenu.classList.remove(
+            "open"
+        );
+
+    }
+);
+
+
+boardSelect.addEventListener(
+    "change",
+    () => {
+
+        activeBoardId =
+            boardSelect.value;
+
+        saveData();
+
+        render();
+
+    }
+);
+
+
+newBoardButton.addEventListener(
+    "click",
+    createBoard
+);
+
+
+renameBoardButton.addEventListener(
+    "click",
+    renameBoard
+);
+
+
+deleteBoardButton.addEventListener(
+    "click",
+    deleteBoard
+);
+
+
+/* =========================================
+   START
+========================================= */
+
+loadData();
+
+render();
