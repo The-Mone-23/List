@@ -1,197 +1,1292 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Lists</title>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    <title>Lists</title>
+    :root {
+      color-scheme: dark;
+      --background: #050607;
+      --panel: #0b0d10;
+      --border: #24282d;
+      --text: #f2f4f6;
+      --muted: #929aa3;
+      --red: #ff2638;
+      --green: #22e784;
+      --yellow: #ffd43b;
+    }
 
-    <link rel="stylesheet" href="style.css">
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: var(--background);
+      color: var(--text);
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:focus-visible,
+    select:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: -3px;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    /*
+      FULL-SCREEN LAYOUT
+
+      ┌───────────────────┬───────────────────┐
+      │      PERSON A     │      PERSON B     │
+      │                   │                   │
+      │       ITEMS       │       ITEMS       │
+      │                   │                   │
+      ├───────────────────┴───────────────────┤
+      │            MUTUAL / SHARED            │
+      │                                       │
+      └───────────────────────────────────────┘
+    */
+
+    .workspace {
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+
+      display: grid;
+
+      grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+
+      grid-template-rows:
+        minmax(0, 62fr)
+        minmax(0, 38fr);
+
+      border: 1px solid var(--red);
+    }
+
+    .panel {
+      min-width: 0;
+      min-height: 0;
+
+      display: flex;
+      flex-direction: column;
+
+      padding:
+        clamp(24px, 5vh, 60px)
+        clamp(14px, 4vw, 70px)
+        22px;
+    }
+
+    /* Continuous vertical red divider. */
+    .left-panel {
+      border-right: 1px solid var(--red);
+    }
+
+    /* Full-width bottom section. */
+    .shared-panel {
+      grid-column: 1 / -1;
+
+      border-top: 1px solid var(--red);
+
+      padding-top: clamp(16px, 2.6vh, 30px);
+      padding-bottom: 48px;
+    }
+
+    /* Editable, centered titles. */
+    .title {
+      width: 100%;
+      min-width: 0;
+      flex-shrink: 0;
+
+      padding: 7px 4px;
+      margin-bottom: clamp(12px, 2.6vh, 30px);
+
+      border: 0;
+      border-bottom: 1px solid transparent;
+      border-radius: 0;
+      outline: none;
+
+      background: transparent;
+      color: var(--text);
+
+      font-size: clamp(22px, 3vw, 44px);
+      font-weight: 700;
+      letter-spacing: 1px;
+
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .title:focus {
+      border-bottom-color: var(--red);
+    }
+
+    .shared-title {
+      font-size: clamp(18px, 2vw, 28px);
+      margin-bottom: 14px;
+    }
+
+    /* Add-item fields. */
+    .add-form {
+      display: flex;
+      flex-shrink: 0;
+
+      width: 100%;
+      height: 46px;
+      margin-bottom: 16px;
+
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    .add-form:focus-within {
+      border-color: var(--red);
+    }
+
+    .add-form input {
+      min-width: 0;
+      width: 100%;
+      padding: 0 14px;
+
+      background: transparent;
+      border: 0;
+      outline: none;
+
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .add-form input::placeholder {
+      color: var(--muted);
+    }
+
+    .add-form button {
+      flex: 0 0 46px;
+
+      border: 0;
+      border-left: 1px solid var(--border);
+
+      background: transparent;
+      color: var(--red);
+
+      font-size: 23px;
+    }
+
+    .add-form button:hover {
+      background: var(--red);
+      color: white;
+    }
+
+    /*
+      Each list scrolls internally.
+      Adding items never pushes the shared section off-screen.
+    */
+    .items {
+      flex: 1;
+      min-height: 0;
+
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      list-style: none;
+
+      scrollbar-width: thin;
+      scrollbar-color: #64212a transparent;
+
+      overscroll-behavior: contain;
+    }
+
+    .shared-panel .add-form,
+    .shared-panel .items {
+      width: min(100%, 900px);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Item rows. */
+    .entry {
+      --status: var(--muted);
+
+      min-height: 50px;
+      margin-bottom: 7px;
+
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 30px 30px;
+      align-items: stretch;
+
+      border: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .entry:hover {
+      background: #111519;
+    }
+
+    .entry[data-status="green"] {
+      --status: var(--green);
+      border-color: #1e6142;
+    }
+
+    .entry[data-status="yellow"] {
+      --status: var(--yellow);
+      border-color: #6b5924;
+    }
+
+    .entry[data-status="red"] {
+      --status: var(--red);
+      border-color: #702731;
+    }
+
+    .entry-toggle {
+      min-width: 0;
+
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr) 9px;
+      align-items: center;
+      gap: 10px;
+
+      padding: 10px 12px 10px 4px;
+
+      text-align: left;
+      border: 0;
+
+      background: transparent;
+      color: var(--status);
+    }
+
+    .entry-number {
+      color: #747d85;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .entry-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+
+    .entry-dot {
+      width: 7px;
+      height: 7px;
+
+      border-radius: 50%;
+      background: var(--status);
+    }
+
+    .entry:not([data-status="neutral"]) .entry-dot {
+      box-shadow: 0 0 9px var(--status);
+    }
+
+    .entry-action {
+      border: 0;
+      background: transparent;
+      color: #919aa3;
+      font-size: 17px;
+    }
+
+    .entry-action:hover {
+      color: white;
+    }
+
+    .entry-action.remove:hover {
+      color: var(--red);
+    }
+
+    .empty {
+      padding: 24px 8px;
+
+      text-align: center;
+      color: var(--muted);
+
+      font-size: 12px;
+    }
+
+    /*
+      Small corner menu for multiple saved lists.
+      No header, logo, or navigation bar.
+    */
+    .menu-toggle {
+      position: fixed;
+      right: 12px;
+      bottom: 10px;
+      z-index: 3;
+
+      padding: 8px 12px;
+
+      background: #090b0d;
+      border: 1px solid #65242c;
+      color: var(--red);
+
+      font-size: 10px;
+      letter-spacing: 2px;
+    }
+
+    .board-menu {
+      position: fixed;
+      right: 12px;
+      bottom: 50px;
+      z-index: 4;
+
+      width: min(290px, calc(100vw - 24px));
+      padding: 14px;
+
+      background: #0b0d10;
+      border: 1px solid var(--red);
+      box-shadow: 0 12px 50px #000;
+    }
+
+    .board-menu label {
+      display: block;
+
+      margin-bottom: 10px;
+
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .board-menu select {
+      width: 100%;
+      height: 38px;
+
+      padding: 0 8px;
+
+      background: #08090b;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .board-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .board-actions button {
+      flex: 1;
+      padding: 10px 4px;
+
+      background: transparent;
+      color: var(--text);
+
+      border: 1px solid var(--border);
+      font-size: 10px;
+    }
+
+    .board-actions button:hover {
+      border-color: var(--red);
+    }
+
+    #deleteBoard {
+      color: var(--red);
+    }
+
+    .warning {
+      position: fixed;
+      left: 10px;
+      bottom: 10px;
+      z-index: 5;
+
+      max-width: calc(100vw - 110px);
+      padding: 10px;
+
+      border: 1px solid var(--yellow);
+      color: var(--yellow);
+      background: #090b0d;
+
+      font-size: 11px;
+    }
+
+    /* Keep the two-column layout on phones, too. */
+    @media (max-width: 600px) {
+      .panel {
+        padding: 24px 10px 14px;
+      }
+
+      .shared-panel {
+        padding: 16px 12px 48px;
+      }
+
+      .title {
+        font-size: 20px;
+        letter-spacing: 0;
+        margin-bottom: 14px;
+      }
+
+      .shared-title {
+        font-size: 18px;
+      }
+
+      .add-form {
+        height: 40px;
+        margin-bottom: 10px;
+      }
+
+      .add-form input {
+        padding: 0 8px;
+        font-size: 11px;
+      }
+
+      .add-form button {
+        flex-basis: 32px;
+      }
+
+      .entry {
+        grid-template-columns: minmax(0, 1fr) 23px 23px;
+        min-height: 46px;
+      }
+
+      .entry-toggle {
+        grid-template-columns: minmax(0, 1fr) 6px;
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .entry-number {
+        display: none;
+      }
+
+      .entry-name {
+        font-size: 12px;
+      }
+
+      .entry-dot {
+        width: 6px;
+        height: 6px;
+      }
+    }
+
+    @media (max-height: 600px) {
+      .panel {
+        padding-top: 10px;
+        padding-bottom: 8px;
+      }
+
+      .shared-panel {
+        padding-bottom: 40px;
+      }
+
+      .title {
+        font-size: 20px;
+        padding: 3px;
+        margin-bottom: 6px;
+      }
+
+      .shared-title {
+        font-size: 16px;
+      }
+
+      .add-form {
+        height: 32px;
+        margin-bottom: 6px;
+      }
+
+      .entry {
+        min-height: 36px;
+        margin-bottom: 4px;
+      }
+
+      .entry-toggle {
+        padding-top: 5px;
+        padding-bottom: 5px;
+      }
+
+      .empty {
+        padding: 8px;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <main class="workspace">
 
-<div class="app">
+    <!-- TOP LEFT -->
+    <section class="panel left-panel" aria-label="Left list">
+      <input
+        id="leftTitle"
+        class="title"
+        value="PERSON A"
+        aria-label="Left title"
+        spellcheck="false"
+      >
 
-    <!-- SMALL FLOATING LIST MANAGER -->
-    <button
-        id="boardMenuToggle"
-        class="board-menu-toggle"
-        type="button"
-    >
-        LISTS
-    </button>
+      <form class="add-form" data-side="left">
+        <input
+          id="leftInput"
+          placeholder="Add item..."
+          aria-label="Add item to left list"
+          autocomplete="off"
+          required
+        >
 
-    <div
-        id="boardMenu"
-        class="board-menu"
-    >
+        <button type="submit" aria-label="Add to left list">
+          +
+        </button>
+      </form>
 
-        <select id="boardSelect"></select>
+      <ul
+        id="leftItems"
+        class="items"
+        aria-label="Left items"
+      ></ul>
+    </section>
 
-        <div class="board-actions">
+    <!-- TOP RIGHT -->
+    <section class="panel" aria-label="Right list">
+      <input
+        id="rightTitle"
+        class="title"
+        value="PERSON B"
+        aria-label="Right title"
+        spellcheck="false"
+      >
 
-            <button
-                id="newBoardButton"
-                type="button"
-            >
-                + NEW
-            </button>
+      <form class="add-form" data-side="right">
+        <input
+          id="rightInput"
+          placeholder="Add item..."
+          aria-label="Add item to right list"
+          autocomplete="off"
+          required
+        >
 
-            <button
-                id="renameBoardButton"
-                type="button"
-            >
-                RENAME
-            </button>
+        <button type="submit" aria-label="Add to right list">
+          +
+        </button>
+      </form>
 
-            <button
-                id="deleteBoardButton"
-                class="danger"
-                type="button"
-            >
-                DELETE
-            </button>
+      <ul
+        id="rightItems"
+        class="items"
+        aria-label="Right items"
+      ></ul>
+    </section>
 
-        </div>
+    <!-- FULL-WIDTH BOTTOM SECTION -->
+    <section class="panel shared-panel" aria-label="Shared list">
+      <input
+        id="sharedTitle"
+        class="title shared-title"
+        value="MUTUAL / SHARED"
+        aria-label="Shared title"
+        spellcheck="false"
+      >
 
+      <form class="add-form" data-side="shared">
+        <input
+          id="sharedInput"
+          placeholder="Add an item to both sides..."
+          aria-label="Add an item to both sides"
+          autocomplete="off"
+          required
+        >
+
+        <button type="submit" aria-label="Add to both sides">
+          +
+        </button>
+      </form>
+
+      <ul
+        id="sharedItems"
+        class="items"
+        aria-label="Items appearing on both sides"
+      ></ul>
+    </section>
+  </main>
+
+  <!-- SAVED LISTS MENU -->
+  <button
+    id="menuToggle"
+    class="menu-toggle"
+    type="button"
+    aria-controls="boardMenu"
+    aria-expanded="false"
+  >
+    LISTS
+  </button>
+
+  <aside
+    id="boardMenu"
+    class="board-menu"
+    aria-label="Saved lists"
+    hidden
+  >
+    <label for="boardSelect">SAVED LISTS</label>
+
+    <select id="boardSelect"></select>
+
+    <div class="board-actions">
+      <button id="newBoard" type="button">+ NEW</button>
+      <button id="renameBoard" type="button">RENAME</button>
+      <button id="deleteBoard" type="button">DELETE</button>
     </div>
+  </aside>
 
+  <p id="warning" class="warning" role="status" hidden>
+    Browser storage is unavailable. Changes will not survive a reload.
+  </p>
 
-    <main class="workspace">
+  <script>
+    (() => {
+      "use strict";
 
-        <!-- TOP TWO LISTS -->
-        <div class="top-lists">
+      const $ = id => document.getElementById(id);
 
-            <!-- LEFT -->
-            <section class="panel">
+      const STORAGE_KEY = "listWorkspace_v3";
 
-                <input
-                    id="leftPersonName"
-                    class="title-input"
-                    type="text"
-                    value="PERSON A"
-                    spellcheck="false"
-                >
+      const COLORS = [
+        "neutral",
+        "green",
+        "yellow",
+        "red"
+      ];
 
-                <div class="add-entry">
+      const SIDES = ["left", "right"];
 
-                    <input
-                        id="leftEntryInput"
-                        type="text"
-                        placeholder="Add entry..."
-                        autocomplete="off"
-                    >
+      const uid = () =>
+        globalThis.crypto?.randomUUID?.() ||
+        Date.now().toString(36) +
+        Math.random().toString(36).slice(2);
 
-                    <button
-                        id="leftAddButton"
-                        type="button"
-                    >
-                        +
-                    </button>
+      const keyOf = name =>
+        name.trim().toLowerCase();
 
-                </div>
+      const nextColor = color =>
+        COLORS[(COLORS.indexOf(color) + 1) % COLORS.length];
 
-                <div
-                    id="leftEntryList"
-                    class="entry-list"
-                ></div>
+      const colorName = color =>
+        color === "neutral" ? "gray" : color;
 
-            </section>
+      const newItem = (name, status = "neutral") => ({
+        id: uid(),
+        name,
+        status
+      });
 
+      function newList(name, example = false) {
+        return {
+          id: uid(),
+          name,
+          sharedTitle: "MUTUAL / SHARED",
 
-            <!-- RED DIVIDER -->
-            <div class="vertical-divider"></div>
+          left: {
+            name: "PERSON A",
+            entries: example
+              ? ["Item 1", "Item 2", "Item 3"].map(n => newItem(n))
+              : []
+          },
 
+          right: {
+            name: "PERSON B",
+            entries: example
+              ? ["Item A", "Item B", "Item C"].map(n => newItem(n))
+              : []
+          }
+        };
+      }
 
-            <!-- RIGHT -->
-            <section class="panel">
+      /*
+        Import saved data from the previous versions.
+        The original storage keys are not deleted.
+      */
+      function normalizeBoard(raw) {
+        const board = newList(
+          typeof raw.name === "string" ? raw.name : "LIST"
+        );
 
-                <input
-                    id="rightPersonName"
-                    class="title-input"
-                    type="text"
-                    value="PERSON B"
-                    spellcheck="false"
-                >
+        board.id =
+          typeof raw.id === "string" && raw.id
+            ? raw.id
+            : board.id;
 
-                <div class="add-entry">
+        board.sharedTitle =
+          typeof raw.sharedTitle === "string"
+            ? raw.sharedTitle
+            : board.sharedTitle;
 
-                    <input
-                        id="rightEntryInput"
-                        type="text"
-                        placeholder="Add entry..."
-                        autocomplete="off"
-                    >
+        for (const side of SIDES) {
+          const source = raw[side];
 
-                    <button
-                        id="rightAddButton"
-                        type="button"
-                    >
-                        +
-                    </button>
+          if (typeof source?.name === "string") {
+            board[side].name = source.name;
+          }
 
-                </div>
+          const entries = Array.isArray(source?.entries)
+            ? source.entries
+            : Array.isArray(source?.friends)
+              ? source.friends
+              : [];
 
-                <div
-                    id="rightEntryList"
-                    class="entry-list"
-                ></div>
+          const ids = new Set();
 
-            </section>
+          board[side].entries = entries
+            .filter(entry =>
+              entry && typeof entry.name === "string"
+            )
+            .map(entry => {
+              let id =
+                typeof entry.id === "string" && entry.id
+                  ? entry.id
+                  : uid();
 
-        </div>
+              if (ids.has(id)) {
+                id = uid();
+              }
 
+              ids.add(id);
 
-        <!-- SHARED / MUTUAL -->
-        <section class="shared-section">
+              return {
+                id,
+                name: entry.name,
+                status: COLORS.includes(entry.status)
+                  ? entry.status
+                  : "neutral"
+              };
+            });
+        }
 
-            <div class="shared-header">
+        return board;
+      }
 
-                <h2>SHARED</h2>
+      function load() {
+        const keys = [
+          STORAGE_KEY,
+          "genericListBoards_v2",
+          "friendListBoards_v1"
+        ];
 
-                <span>
-                    PRESENT ON BOTH SIDES
-                </span>
+        for (const key of keys) {
+          try {
+            const data = JSON.parse(localStorage.getItem(key));
 
-            </div>
+            if (!Array.isArray(data?.boards)) {
+              continue;
+            }
 
+            const boards = data.boards
+              .filter(board =>
+                board &&
+                typeof board === "object" &&
+                !Array.isArray(board)
+              )
+              .map(normalizeBoard);
 
-            <div class="shared-add">
+            if (!boards.length) {
+              continue;
+            }
 
-                <input
-                    id="sharedEntryInput"
-                    type="text"
-                    placeholder="Add to both sides..."
-                    autocomplete="off"
-                >
+            const ids = new Set();
 
-                <button
-                    id="sharedAddButton"
-                    type="button"
-                >
-                    +
-                </button>
+            boards.forEach(board => {
+              if (ids.has(board.id)) {
+                board.id = uid();
+              }
 
-            </div>
+              ids.add(board.id);
+            });
 
+            return {
+              boards,
+              activeBoardId: boards.some(
+                board => board.id === data.activeBoardId
+              )
+                ? data.activeBoardId
+                : boards[0].id
+            };
+          } catch (error) {
+            console.warn("Could not read saved lists:", error);
+          }
+        }
 
-            <div
-                id="sharedEntryList"
-                class="shared-list"
-            ></div>
+        const board = newList("LIST 01", true);
 
-        </section>
+        return {
+          boards: [board],
+          activeBoardId: board.id
+        };
+      }
 
-    </main>
+      let state = load();
 
-</div>
+      const active = () =>
+        state.boards.find(
+          board => board.id === state.activeBoardId
+        );
 
-<script src="script.js"></script>
+      function save() {
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(state)
+          );
 
+          $("warning").hidden = true;
+        } catch (error) {
+          $("warning").hidden = false;
+          console.warn("Could not save lists:", error);
+        }
+      }
+
+      function update() {
+        save();
+        render();
+      }
+
+      /*
+        Shared items match by name, ignoring capitalization
+        and surrounding spaces.
+
+        Shared actions apply to the matching items on both sides.
+      */
+      function sharedGroups() {
+        const maps = SIDES.map(side => {
+          const map = new Map();
+
+          active()[side].entries.forEach(item => {
+            const key = keyOf(item.name);
+
+            if (!map.has(key)) {
+              map.set(key, []);
+            }
+
+            map.get(key).push(item);
+          });
+
+          return map;
+        });
+
+        const groups = [];
+
+        for (const [key, left] of maps[0]) {
+          if (!key || !maps[1].has(key)) {
+            continue;
+          }
+
+          const entries = [
+            ...left,
+            ...maps[1].get(key)
+          ];
+
+          const mixed = entries.some(
+            entry => entry.status !== entries[0].status
+          );
+
+          groups.push({
+            id: key,
+            name: left[0].name,
+            entries,
+            mixed,
+            status: mixed ? "neutral" : entries[0].status
+          });
+        }
+
+        return groups;
+      }
+
+      function makeRow(item, index, side, entries) {
+        const row = document.createElement("li");
+
+        row.className = "entry";
+        row.dataset.status = item.status;
+
+        const toggle = document.createElement("button");
+
+        toggle.type = "button";
+        toggle.className = "entry-toggle";
+        toggle.dataset.focus = side + ":" + item.id;
+
+        const description = item.mixed
+          ? "different colors on the two sides"
+          : colorName(item.status);
+
+        toggle.title =
+          `${item.name}: ${description}. ` +
+          `Click for ${colorName(nextColor(item.status))}` +
+          `${side === "shared" ? " on both sides" : ""}.`;
+
+        toggle.setAttribute("aria-label", toggle.title);
+
+        const parts = [
+          ["entry-number", String(index + 1).padStart(2, "0")],
+          ["entry-name", item.name],
+          ["entry-dot", ""]
+        ];
+
+        for (const [className, text] of parts) {
+          const span = document.createElement("span");
+
+          span.className = className;
+          span.textContent = text;
+
+          if (className !== "entry-name") {
+            span.setAttribute("aria-hidden", "true");
+          }
+
+          toggle.append(span);
+        }
+
+        toggle.addEventListener("click", () => {
+          const next = nextColor(item.status);
+
+          entries.forEach(entry => {
+            entry.status = next;
+          });
+
+          update();
+        });
+
+        row.append(toggle);
+
+        const actions = [
+          ["✎", "Rename", "rename"],
+          ["×", "Delete", "remove"]
+        ];
+
+        for (const [text, label, action] of actions) {
+          const button = document.createElement("button");
+
+          button.type = "button";
+          button.className = "entry-action " + action;
+          button.textContent = text;
+
+          button.title =
+            `${label} ${item.name}` +
+            `${side === "shared" ? " on both sides" : ""}`;
+
+          button.setAttribute("aria-label", button.title);
+
+          button.addEventListener("click", () => {
+            editItems(action, side, item, entries);
+          });
+
+          row.append(button);
+        }
+
+        return row;
+      }
+
+      function editItems(action, side, item, entries) {
+        const affected = side === "shared" ? SIDES : [side];
+
+        if (action === "rename") {
+          const name = prompt(
+            side === "shared"
+              ? "Rename on both sides:"
+              : "Rename item:",
+            item.name
+          )?.trim();
+
+          if (!name) {
+            return;
+          }
+
+          const duplicate = affected.some(currentSide =>
+            active()[currentSide].entries.some(entry =>
+              !entries.includes(entry) &&
+              keyOf(entry.name) === keyOf(name)
+            )
+          );
+
+          if (duplicate) {
+            alert("That name is already in the list.");
+            return;
+          }
+
+          entries.forEach(entry => {
+            entry.name = name;
+          });
+        } else {
+          if (
+            side === "shared" &&
+            !confirm(`Delete "${item.name}" from BOTH sides?`)
+          ) {
+            return;
+          }
+
+          affected.forEach(currentSide => {
+            active()[currentSide].entries =
+              active()[currentSide].entries.filter(
+                entry => !entries.includes(entry)
+              );
+          });
+        }
+
+        update();
+      }
+
+      function render() {
+        const board = active();
+
+        const focusKey =
+          document.activeElement?.dataset.focus;
+
+        $("boardSelect").replaceChildren(
+          ...state.boards.map(savedBoard => {
+            const option = document.createElement("option");
+
+            option.value = savedBoard.id;
+            option.textContent = savedBoard.name;
+            option.selected =
+              savedBoard.id === state.activeBoardId;
+
+            return option;
+          })
+        );
+
+        for (const side of [...SIDES, "shared"]) {
+          $(side + "Title").value =
+            side === "shared"
+              ? board.sharedTitle
+              : board[side].name;
+
+          const list = $(side + "Items");
+          const scrollTop = list.scrollTop;
+
+          const items =
+            side === "shared"
+              ? sharedGroups()
+              : board[side].entries;
+
+          list.replaceChildren(
+            ...items.map((item, index) =>
+              makeRow(
+                item,
+                index,
+                side,
+                side === "shared" ? item.entries : [item]
+              )
+            )
+          );
+
+          if (!items.length) {
+            const empty = document.createElement("li");
+
+            empty.className = "empty";
+
+            empty.textContent =
+              side === "shared"
+                ? "Items appearing on both sides"
+                : "No items yet";
+
+            list.append(empty);
+          }
+
+          list.scrollTop = scrollTop;
+        }
+
+        if (focusKey) {
+          [...document.querySelectorAll("[data-focus]")]
+            .find(element =>
+              element.dataset.focus === focusKey
+            )
+            ?.focus({ preventScroll: true });
+        }
+      }
+
+      /* Add items with the + button or Enter. */
+      document.querySelectorAll(".add-form").forEach(form => {
+        form.addEventListener("submit", event => {
+          event.preventDefault();
+
+          const side = form.dataset.side;
+          const input = $(side + "Input");
+          const name = input.value.trim();
+
+          if (!name) {
+            return;
+          }
+
+          const board = active();
+
+          if (side === "shared") {
+            const existing = SIDES.map(currentSide =>
+              board[currentSide].entries.find(
+                entry => keyOf(entry.name) === keyOf(name)
+              )
+            );
+
+            const status =
+              existing.find(Boolean)?.status || "neutral";
+
+            SIDES.forEach((currentSide, index) => {
+              if (!existing[index]) {
+                board[currentSide].entries.push(
+                  newItem(name, status)
+                );
+              }
+            });
+          } else {
+            const duplicate = board[side].entries.some(
+              entry => keyOf(entry.name) === keyOf(name)
+            );
+
+            if (duplicate) {
+              alert("That item is already in this list.");
+              return;
+            }
+
+            board[side].entries.push(newItem(name));
+          }
+
+          input.value = "";
+
+          update();
+          input.focus();
+        });
+      });
+
+      /* All three section titles are editable. */
+      for (const side of [...SIDES, "shared"]) {
+        $(side + "Title").addEventListener("input", event => {
+          if (side === "shared") {
+            active().sharedTitle = event.target.value;
+          } else {
+            active()[side].name = event.target.value;
+          }
+
+          save();
+        });
+      }
+
+      /* Saved-list menu. */
+      function showMenu(open) {
+        $("boardMenu").hidden = !open;
+
+        $("menuToggle").setAttribute(
+          "aria-expanded",
+          String(open)
+        );
+      }
+
+      $("menuToggle").addEventListener("click", () => {
+        showMenu($("boardMenu").hidden);
+      });
+
+      document.addEventListener("click", event => {
+        if (
+          !$("boardMenu").contains(event.target) &&
+          !$("menuToggle").contains(event.target)
+        ) {
+          showMenu(false);
+        }
+      });
+
+      document.addEventListener("keydown", event => {
+        if (
+          event.key === "Escape" &&
+          !$("boardMenu").hidden
+        ) {
+          showMenu(false);
+          $("menuToggle").focus();
+        }
+      });
+
+      $("boardSelect").addEventListener("change", event => {
+        state.activeBoardId = event.target.value;
+
+        document.querySelectorAll(".add-form input")
+          .forEach(input => {
+            input.value = "";
+          });
+
+        update();
+        showMenu(false);
+      });
+
+      $("newBoard").addEventListener("click", () => {
+        const name = prompt(
+          "Name this set of lists:",
+          `LIST ${state.boards.length + 1}`
+        )?.trim();
+
+        if (!name) {
+          return;
+        }
+
+        const board = newList(name);
+
+        state.boards.push(board);
+        state.activeBoardId = board.id;
+
+        document.querySelectorAll(".add-form input")
+          .forEach(input => {
+            input.value = "";
+          });
+
+        update();
+        showMenu(false);
+      });
+
+      $("renameBoard").addEventListener("click", () => {
+        const name = prompt(
+          "Rename this set of lists:",
+          active().name
+        )?.trim();
+
+        if (name) {
+          active().name = name;
+          update();
+        }
+      });
+
+      $("deleteBoard").addEventListener("click", () => {
+        if (state.boards.length === 1) {
+          alert("Keep at least one set of lists.");
+          return;
+        }
+
+        if (
+          !confirm(
+            `Delete "${active().name}" and all of its items?`
+          )
+        ) {
+          return;
+        }
+
+        state.boards = state.boards.filter(
+          board => board.id !== state.activeBoardId
+        );
+
+        state.activeBoardId = state.boards[0].id;
+
+        update();
+      });
+
+      render();
+      save();
+    })();
+  </script>
 </body>
 </html>
