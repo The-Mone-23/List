@@ -1,0 +1,870 @@
+/* =========================================
+   RESET
+========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --background: #050607;
+    --background-secondary: #090b0d;
+
+    --panel: #0b0e10;
+    --panel-light: #101417;
+    --panel-hover: #14191d;
+
+    --border: #20262b;
+    --border-bright: #30383e;
+
+    --text: #f4f4f4;
+    --text-secondary: #8a949c;
+    --text-dark: #555e65;
+
+    --red: #ff2638;
+    --red-dark: #80121d;
+    --red-glow: rgba(255, 38, 56, 0.22);
+
+    --green: #22e784;
+    --green-dark: #0c6d3e;
+    --green-glow: rgba(34, 231, 132, 0.14);
+
+    --transition: 160ms ease;
+}
+
+
+/* =========================================
+   BODY
+========================================= */
+
+html,
+body {
+    min-height: 100%;
+}
+
+body {
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(255, 38, 56, 0.045),
+            transparent 35%
+        ),
+        var(--background);
+
+    color: var(--text);
+
+    font-family:
+        "SFMono-Regular",
+        "SF Mono",
+        "Roboto Mono",
+        "Cascadia Code",
+        "Liberation Mono",
+        monospace;
+
+    overflow-x: hidden;
+}
+
+
+/* subtle tech grid */
+
+body::before {
+    content: "";
+
+    position: fixed;
+    inset: 0;
+
+    pointer-events: none;
+
+    background-image:
+        linear-gradient(
+            rgba(255, 255, 255, 0.014) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.014) 1px,
+            transparent 1px
+        );
+
+    background-size: 40px 40px;
+
+    mask-image:
+        linear-gradient(
+            to bottom,
+            black,
+            transparent 90%
+        );
+}
+
+
+/* =========================================
+   APP
+========================================= */
+
+.app {
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    position: relative;
+}
+
+
+/* =========================================
+   TOPBAR
+========================================= */
+
+.topbar {
+    min-height: 82px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 16px 24px;
+
+    border-bottom: 1px solid var(--border);
+
+    background:
+        rgba(5, 6, 7, 0.94);
+
+    backdrop-filter: blur(15px);
+
+    position: relative;
+    z-index: 20;
+}
+
+
+/* =========================================
+   BRAND
+========================================= */
+
+.brand {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+}
+
+.brand-icon {
+    width: 13px;
+    height: 42px;
+
+    background: var(--red);
+
+    box-shadow:
+        0 0 8px rgba(255, 38, 56, 0.6),
+        0 0 24px rgba(255, 38, 56, 0.2);
+}
+
+.brand-title {
+    font-weight: 700;
+    font-size: 17px;
+
+    letter-spacing: 2px;
+}
+
+.brand-subtitle {
+    margin-top: 4px;
+
+    color: var(--text-secondary);
+
+    font-size: 9px;
+
+    letter-spacing: 3px;
+}
+
+
+/* =========================================
+   BOARD CONTROLS
+========================================= */
+
+.board-controls {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+}
+
+#boardSelect {
+    height: 38px;
+
+    min-width: 160px;
+
+    padding: 0 34px 0 12px;
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+
+    color: var(--text);
+
+    font-family: inherit;
+
+    font-size: 11px;
+
+    outline: none;
+
+    cursor: pointer;
+}
+
+#boardSelect:hover,
+#boardSelect:focus {
+    border-color: var(--border-bright);
+}
+
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+.button {
+    height: 38px;
+
+    padding: 0 13px;
+
+    font-family: inherit;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    color: var(--text);
+
+    background: transparent;
+
+    border: 1px solid var(--border);
+
+    cursor: pointer;
+
+    transition:
+        border-color var(--transition),
+        background-color var(--transition),
+        color var(--transition);
+}
+
+.secondary-button:hover {
+    background: var(--panel-light);
+    border-color: var(--text-secondary);
+}
+
+.danger-button {
+    color: var(--red);
+}
+
+.danger-button:hover {
+    background: rgba(255, 38, 56, 0.1);
+    border-color: var(--red);
+}
+
+
+/* =========================================
+   SPLIT VIEW
+========================================= */
+
+.lists-container {
+    flex: 1;
+
+    min-height: 0;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        1px
+        minmax(0, 1fr);
+
+    position: relative;
+}
+
+
+/* =========================================
+   CENTER DIVIDER
+========================================= */
+
+.center-divider {
+    width: 1px;
+
+    background: var(--red);
+
+    position: relative;
+
+    box-shadow:
+        0 0 10px var(--red-glow),
+        0 0 25px rgba(255, 38, 56, 0.08);
+
+    z-index: 5;
+}
+
+.divider-glow {
+    width: 9px;
+
+    position: absolute;
+
+    top: 0;
+    bottom: 0;
+    left: -4px;
+
+    background:
+        linear-gradient(
+            to right,
+            transparent,
+            rgba(255, 38, 56, 0.05),
+            transparent
+        );
+
+    pointer-events: none;
+}
+
+.divider-text {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%)
+        rotate(90deg);
+
+    padding: 5px 12px;
+
+    background: var(--background);
+
+    color: var(--red);
+
+    font-size: 8px;
+
+    letter-spacing: 5px;
+}
+
+
+/* =========================================
+   PERSON PANEL
+========================================= */
+
+.person-panel {
+    padding: 40px clamp(24px, 4vw, 70px);
+
+    min-width: 0;
+}
+
+
+/* =========================================
+   PERSON HEADER
+========================================= */
+
+.person-header {
+    margin-bottom: 32px;
+
+    border-bottom: 1px solid var(--border);
+
+    padding-bottom: 22px;
+}
+
+.person-number {
+    color: var(--red);
+
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 3px;
+
+    margin-bottom: 10px;
+}
+
+.person-name-input {
+    width: 100%;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+
+    color: var(--text);
+
+    font-family: inherit;
+
+    font-size:
+        clamp(27px, 3vw, 48px);
+
+    font-weight: 700;
+
+    letter-spacing: -2px;
+
+    text-transform: uppercase;
+}
+
+.person-name-input:focus {
+    color: white;
+}
+
+.friend-count {
+    margin-top: 11px;
+
+    font-size: 9px;
+
+    color: var(--text-secondary);
+
+    letter-spacing: 2px;
+}
+
+
+/* =========================================
+   ADD FRIEND
+========================================= */
+
+.add-friend {
+    height: 50px;
+
+    display: flex;
+
+    border: 1px solid var(--border);
+
+    background: var(--panel);
+
+    margin-bottom: 18px;
+
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition);
+}
+
+.add-friend:focus-within {
+    border-color: var(--red);
+
+    box-shadow:
+        0 0 0 1px rgba(255, 38, 56, 0.08);
+}
+
+.add-friend input {
+    flex: 1;
+
+    min-width: 0;
+
+    padding: 0 16px;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+
+    color: var(--text);
+
+    font-family: inherit;
+
+    font-size: 12px;
+}
+
+.add-friend input::placeholder {
+    color: var(--text-dark);
+}
+
+.add-friend button {
+    width: 50px;
+
+    flex-shrink: 0;
+
+    border: none;
+    border-left: 1px solid var(--border);
+
+    background: transparent;
+
+    color: var(--red);
+
+    font-family: inherit;
+
+    font-size: 22px;
+
+    cursor: pointer;
+
+    transition:
+        background-color var(--transition),
+        color var(--transition);
+}
+
+.add-friend button:hover {
+    background: var(--red);
+    color: white;
+}
+
+
+/* =========================================
+   FRIEND LIST
+========================================= */
+
+.friend-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+
+/* =========================================
+   FRIEND ITEM
+========================================= */
+
+.friend-item {
+    height: 58px;
+
+    display: grid;
+
+    grid-template-columns:
+        38px
+        minmax(0, 1fr)
+        40px;
+
+    align-items: center;
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+
+    cursor: pointer;
+
+    transition:
+        background-color var(--transition),
+        border-color var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+.friend-item:hover {
+    background: var(--panel-hover);
+
+    border-color: var(--border-bright);
+
+    transform: translateX(2px);
+}
+
+
+/* Number */
+
+.friend-index {
+    color: var(--text-dark);
+
+    font-size: 9px;
+
+    text-align: center;
+
+    user-select: none;
+}
+
+
+/* Name */
+
+.friend-name {
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 13px;
+
+    letter-spacing: 0.5px;
+
+    color: var(--text-secondary);
+
+    transition:
+        color var(--transition),
+        text-shadow var(--transition);
+}
+
+
+/* Status indicator */
+
+.friend-status {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    justify-self: center;
+
+    background: #3d454b;
+
+    transition:
+        background-color var(--transition),
+        box-shadow var(--transition);
+}
+
+
+/* DELETE BUTTON */
+
+.friend-delete {
+    display: none;
+
+    position: absolute;
+
+    right: 48px;
+
+    color: var(--text-dark);
+
+    border: none;
+
+    background: transparent;
+
+    font-family: inherit;
+
+    cursor: pointer;
+
+    padding: 7px;
+
+    font-size: 12px;
+}
+
+.friend-delete:hover {
+    color: var(--red);
+}
+
+.friend-item {
+    position: relative;
+}
+
+.friend-item:hover .friend-delete {
+    display: block;
+}
+
+
+/* =========================================
+   GREEN STATUS
+========================================= */
+
+.friend-item.green {
+    border-color:
+        rgba(34, 231, 132, 0.28);
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(34, 231, 132, 0.065),
+            var(--panel) 30%
+        );
+}
+
+.friend-item.green .friend-name {
+    color: var(--green);
+
+    text-shadow:
+        0 0 14px var(--green-glow);
+}
+
+.friend-item.green .friend-status {
+    background: var(--green);
+
+    box-shadow:
+        0 0 7px rgba(34, 231, 132, 0.65);
+}
+
+
+/* =========================================
+   RED STATUS
+========================================= */
+
+.friend-item.red {
+    border-color:
+        rgba(255, 38, 56, 0.32);
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255, 38, 56, 0.065),
+            var(--panel) 30%
+        );
+}
+
+.friend-item.red .friend-name {
+    color: var(--red);
+
+    text-shadow:
+        0 0 14px var(--red-glow);
+}
+
+.friend-item.red .friend-status {
+    background: var(--red);
+
+    box-shadow:
+        0 0 7px rgba(255, 38, 56, 0.65);
+}
+
+
+/* =========================================
+   EMPTY LIST
+========================================= */
+
+.empty-list {
+    padding: 40px 20px;
+
+    border: 1px dashed var(--border);
+
+    color: var(--text-dark);
+
+    font-size: 10px;
+
+    text-align: center;
+
+    letter-spacing: 2px;
+}
+
+
+/* =========================================
+   STATUS BAR
+========================================= */
+
+.status-bar {
+    min-height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 24px;
+
+    border-top: 1px solid var(--border);
+
+    background: rgba(5, 6, 7, 0.95);
+
+    font-size: 8px;
+
+    letter-spacing: 2px;
+
+    color: var(--text-secondary);
+}
+
+.legend {
+    display: flex;
+    align-items: center;
+
+    gap: 22px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+
+    border-radius: 50%;
+}
+
+.status-dot.green {
+    background: var(--green);
+}
+
+.status-dot.red {
+    background: var(--red);
+}
+
+.status-dot.neutral {
+    background: #555e65;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 800px) {
+
+    .topbar {
+        flex-direction: column;
+        align-items: stretch;
+
+        gap: 18px;
+    }
+
+    .board-controls {
+        width: 100%;
+
+        flex-wrap: wrap;
+    }
+
+    #boardSelect {
+        flex: 1;
+    }
+
+    .lists-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1px auto;
+    }
+
+    .center-divider {
+        width: 100%;
+        height: 1px;
+    }
+
+    .divider-glow {
+        width: 100%;
+        height: 9px;
+
+        top: -4px;
+        left: 0;
+
+        background:
+            linear-gradient(
+                to bottom,
+                transparent,
+                rgba(255, 38, 56, 0.08),
+                transparent
+            );
+    }
+
+    .divider-text {
+        transform:
+            translate(-50%, -50%);
+
+        letter-spacing: 4px;
+    }
+
+    .person-panel {
+        padding:
+            32px 20px;
+    }
+
+    .status-bar {
+        flex-direction: column;
+
+        gap: 10px;
+
+        align-items: flex-start;
+
+        padding: 14px 20px;
+    }
+
+    .instruction {
+        display: none;
+    }
+}
+
+
+@media (max-width: 500px) {
+
+    .brand-title {
+        font-size: 14px;
+    }
+
+    .board-controls .button {
+        flex: 1;
+    }
+
+    #boardSelect {
+        flex-basis: 100%;
+    }
+
+    .legend {
+        gap: 14px;
+    }
+
+}
