@@ -8,95 +8,83 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Friend Lists</title>
+    <title>Lists</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <div class="app">
+<div class="app">
 
-        <!-- TOP BAR -->
-        <header class="topbar">
+    <!-- SMALL FLOATING LIST MANAGER -->
+    <button
+        id="boardMenuToggle"
+        class="board-menu-toggle"
+        type="button"
+    >
+        LISTS
+    </button>
 
-            <div class="brand">
-                <div class="brand-icon"></div>
+    <div
+        id="boardMenu"
+        class="board-menu"
+    >
 
-                <div>
-                    <div class="brand-title">FRIEND//LIST</div>
-                    <div class="brand-subtitle">RELATIONSHIP MATRIX</div>
-                </div>
-            </div>
+        <select id="boardSelect"></select>
 
-            <div class="board-controls">
+        <div class="board-actions">
 
-                <select id="boardSelect"></select>
+            <button
+                id="newBoardButton"
+                type="button"
+            >
+                + NEW
+            </button>
 
-                <button
-                    id="newBoardButton"
-                    class="button secondary-button"
-                    type="button"
+            <button
+                id="renameBoardButton"
+                type="button"
+            >
+                RENAME
+            </button>
+
+            <button
+                id="deleteBoardButton"
+                class="danger"
+                type="button"
+            >
+                DELETE
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <main class="workspace">
+
+        <!-- TOP TWO LISTS -->
+        <div class="top-lists">
+
+            <!-- LEFT -->
+            <section class="panel">
+
+                <input
+                    id="leftPersonName"
+                    class="title-input"
+                    type="text"
+                    value="PERSON A"
+                    spellcheck="false"
                 >
-                    + NEW LIST
-                </button>
 
-                <button
-                    id="renameBoardButton"
-                    class="button secondary-button"
-                    type="button"
-                >
-                    RENAME
-                </button>
-
-                <button
-                    id="deleteBoardButton"
-                    class="button danger-button"
-                    type="button"
-                >
-                    DELETE
-                </button>
-
-            </div>
-
-        </header>
-
-
-        <!-- MAIN SPLIT VIEW -->
-        <main class="lists-container">
-
-            <!-- LEFT PERSON -->
-            <section class="person-panel" id="leftPanel">
-
-                <div class="person-header">
-
-                    <div class="person-number">
-                        PERSON // 01
-                    </div>
+                <div class="add-entry">
 
                     <input
+                        id="leftEntryInput"
                         type="text"
-                        id="leftPersonName"
-                        class="person-name-input"
-                        value="PERSON A"
-                        spellcheck="false"
-                    >
-
-                    <div class="friend-count">
-                        <span id="leftFriendCount">0</span> CONNECTIONS
-                    </div>
-
-                </div>
-
-
-                <div class="add-friend">
-
-                    <input
-                        id="leftFriendInput"
-                        type="text"
-                        placeholder="Enter friend name..."
+                        placeholder="Add entry..."
                         autocomplete="off"
-                        spellcheck="false"
                     >
 
                     <button
@@ -108,59 +96,36 @@
 
                 </div>
 
-
                 <div
-                    id="leftFriendList"
-                    class="friend-list"
+                    id="leftEntryList"
+                    class="entry-list"
                 ></div>
 
             </section>
 
 
-            <!-- VERTICAL RED DIVIDER -->
-            <div class="center-divider">
-
-                <div class="divider-glow"></div>
-
-                <span class="divider-text">
-                    LINK
-                </span>
-
-            </div>
+            <!-- RED DIVIDER -->
+            <div class="vertical-divider"></div>
 
 
-            <!-- RIGHT PERSON -->
-            <section class="person-panel" id="rightPanel">
+            <!-- RIGHT -->
+            <section class="panel">
 
-                <div class="person-header">
+                <input
+                    id="rightPersonName"
+                    class="title-input"
+                    type="text"
+                    value="PERSON B"
+                    spellcheck="false"
+                >
 
-                    <div class="person-number">
-                        PERSON // 02
-                    </div>
+                <div class="add-entry">
 
                     <input
+                        id="rightEntryInput"
                         type="text"
-                        id="rightPersonName"
-                        class="person-name-input"
-                        value="PERSON B"
-                        spellcheck="false"
-                    >
-
-                    <div class="friend-count">
-                        <span id="rightFriendCount">0</span> CONNECTIONS
-                    </div>
-
-                </div>
-
-
-                <div class="add-friend">
-
-                    <input
-                        id="rightFriendInput"
-                        type="text"
-                        placeholder="Enter friend name..."
+                        placeholder="Add entry..."
                         autocomplete="off"
-                        spellcheck="false"
                     >
 
                     <button
@@ -172,49 +137,61 @@
 
                 </div>
 
-
                 <div
-                    id="rightFriendList"
-                    class="friend-list"
+                    id="rightEntryList"
+                    class="entry-list"
                 ></div>
 
             </section>
 
-        </main>
+        </div>
 
 
-        <!-- BOTTOM LEGEND -->
-        <footer class="status-bar">
+        <!-- SHARED / MUTUAL -->
+        <section class="shared-section">
 
-            <div class="legend">
+            <div class="shared-header">
 
-                <div class="legend-item">
-                    <span class="status-dot green"></span>
-                    GREEN
-                </div>
+                <h2>SHARED</h2>
 
-                <div class="legend-item">
-                    <span class="status-dot red"></span>
-                    RED
-                </div>
-
-                <div class="legend-item">
-                    <span class="status-dot neutral"></span>
-                    UNSET
-                </div>
+                <span>
+                    PRESENT ON BOTH SIDES
+                </span>
 
             </div>
 
-            <div class="instruction">
-                CLICK A NAME TO CHANGE STATUS
+
+            <div class="shared-add">
+
+                <input
+                    id="sharedEntryInput"
+                    type="text"
+                    placeholder="Add to both sides..."
+                    autocomplete="off"
+                >
+
+                <button
+                    id="sharedAddButton"
+                    type="button"
+                >
+                    +
+                </button>
+
             </div>
 
-        </footer>
 
-    </div>
+            <div
+                id="sharedEntryList"
+                class="shared-list"
+            ></div>
 
+        </section>
 
-    <script src="script.js"></script>
+    </main>
+
+</div>
+
+<script src="script.js"></script>
 
 </body>
 </html>
