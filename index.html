@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Friend Lists</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div class="brand">
+                <div class="brand-icon"></div>
+
+                <div>
+                    <div class="brand-title">FRIEND//LIST</div>
+                    <div class="brand-subtitle">RELATIONSHIP MATRIX</div>
+                </div>
+            </div>
+
+            <div class="board-controls">
+
+                <select id="boardSelect"></select>
+
+                <button
+                    id="newBoardButton"
+                    class="button secondary-button"
+                    type="button"
+                >
+                    + NEW LIST
+                </button>
+
+                <button
+                    id="renameBoardButton"
+                    class="button secondary-button"
+                    type="button"
+                >
+                    RENAME
+                </button>
+
+                <button
+                    id="deleteBoardButton"
+                    class="button danger-button"
+                    type="button"
+                >
+                    DELETE
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- MAIN SPLIT VIEW -->
+        <main class="lists-container">
+
+            <!-- LEFT PERSON -->
+            <section class="person-panel" id="leftPanel">
+
+                <div class="person-header">
+
+                    <div class="person-number">
+                        PERSON // 01
+                    </div>
+
+                    <input
+                        type="text"
+                        id="leftPersonName"
+                        class="person-name-input"
+                        value="PERSON A"
+                        spellcheck="false"
+                    >
+
+                    <div class="friend-count">
+                        <span id="leftFriendCount">0</span> CONNECTIONS
+                    </div>
+
+                </div>
+
+
+                <div class="add-friend">
+
+                    <input
+                        id="leftFriendInput"
+                        type="text"
+                        placeholder="Enter friend name..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+
+                    <button
+                        id="leftAddButton"
+                        type="button"
+                    >
+                        +
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="leftFriendList"
+                    class="friend-list"
+                ></div>
+
+            </section>
+
+
+            <!-- VERTICAL RED DIVIDER -->
+            <div class="center-divider">
+
+                <div class="divider-glow"></div>
+
+                <span class="divider-text">
+                    LINK
+                </span>
+
+            </div>
+
+
+            <!-- RIGHT PERSON -->
+            <section class="person-panel" id="rightPanel">
+
+                <div class="person-header">
+
+                    <div class="person-number">
+                        PERSON // 02
+                    </div>
+
+                    <input
+                        type="text"
+                        id="rightPersonName"
+                        class="person-name-input"
+                        value="PERSON B"
+                        spellcheck="false"
+                    >
+
+                    <div class="friend-count">
+                        <span id="rightFriendCount">0</span> CONNECTIONS
+                    </div>
+
+                </div>
+
+
+                <div class="add-friend">
+
+                    <input
+                        id="rightFriendInput"
+                        type="text"
+                        placeholder="Enter friend name..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+
+                    <button
+                        id="rightAddButton"
+                        type="button"
+                    >
+                        +
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="rightFriendList"
+                    class="friend-list"
+                ></div>
+
+            </section>
+
+        </main>
+
+
+        <!-- BOTTOM LEGEND -->
+        <footer class="status-bar">
+
+            <div class="legend">
+
+                <div class="legend-item">
+                    <span class="status-dot green"></span>
+                    GREEN
+                </div>
+
+                <div class="legend-item">
+                    <span class="status-dot red"></span>
+                    RED
+                </div>
+
+                <div class="legend-item">
+                    <span class="status-dot neutral"></span>
+                    UNSET
+                </div>
+
+            </div>
+
+            <div class="instruction">
+                CLICK A NAME TO CHANGE STATUS
+            </div>
+
+        </footer>
+
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
